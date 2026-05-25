@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash([ -d \"$HOME/.claude/commands\" ])",
+      "Bash([ -d \"$HOME/.claude/agents\" ])"
+    ]
+  }
+}
