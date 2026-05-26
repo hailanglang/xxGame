@@ -2,7 +2,12 @@
   "permissions": {
     "allow": [
       "Bash([ -d \"$HOME/.claude/commands\" ])",
-      "Bash([ -d \"$HOME/.claude/agents\" ])"
+      "Bash([ -d \"$HOME/.claude/agents\" ])",
+      "mcp__Framelink_MCP_for_Figma__get_figma_data"
     ]
-  }
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "Framelink MCP for Figma"
+  ]
 }
