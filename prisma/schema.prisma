@@ -1,7 +1,15 @@
 // ============================================================================
 // XXGame — 数据库 Schema
 // 基于 Figma 设计稿: XXGame-V1 (z8ontv0eTqv8M1Yk6fKLUw)
-// 数据库: PostgreSQL (Supabase 在线数据库)
+// 数据库: PostgreSQL (Supabase)
+//
+// 鉴权架构:
+//   前台用户: 手机号 + 短信验证码登录 (自建，无第三方依赖)
+//   后台管理: 邮箱 + 密码登录 (独立体系)
+//
+// 表结构关系:
+//   users ──1:N──→ posts / comments / likes / verification_codes
+//   admins (独立) ──1:N──→ audit_logs
 // ============================================================================
 
 generator client {
@@ -14,42 +22,77 @@ datasource db {
 }
 
 // ============================================================================
-// 1. users — 用户表
+// 1. users — 前台用户表
 // 对应 Figma: 登录窗口 (16:534)
-// 手机号 + 验证码的免密登录方式，手机号作为唯一登录凭证
-// role 区分普通用户(user)和管理员(admin)
+// 手机号 + 验证码免密登录，phone 作为唯一登录凭证
 // ============================================================================
 model User {
   id          String   @id @default(uuid()) @db.Uuid
   phone       String   @unique @db.VarChar(20)
   nickname    String?  @db.VarChar(50)
   avatarUrl   String?  @map("avatar_url") @db.Text
-  role        String   @default("user") @db.VarChar(10)    // "user" | "admin"
+  role        String   @default("user") @db.VarChar(10)    // "user" | "moderator"
   status      String   @default("active") @db.VarChar(10)  // "active" | "banned"
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz()
 
-  posts              Post[]
-  comments           Comment[]
-  likes              Like[]
-  verificationCodes  VerificationCode[]
-  auditLogs          AuditLog[]
+  posts             Post[]
+  comments          Comment[]
+  likes             Like[]
+  verificationCodes VerificationCode[]
 
   @@map("users")
 }
 
 // ============================================================================
-// 2. workspaces — 工作区/板块表
+// 2. verification_codes — 短信验证码表
+// 对应 Figma: 登录窗口"请输入验证码"输入框 (18:65)
+// 5 分钟过期，used 标记防止重复使用
+// ============================================================================
+model VerificationCode {
+  id        String   @id @default(uuid()) @db.Uuid
+  phone     String   @db.VarChar(20)
+  code      String   @db.VarChar(10)
+  expiresAt DateTime @map("expires_at") @db.Timestamptz()
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  @@index([phone, createdAt])
+  @@map("verification_codes")
+}
+
+// ============================================================================
+// 3. admins — 后台管理员表
+// 独立鉴权: email + bcrypt(passwordHash)
+// 与前台 users 完全隔离，角色支持 admin / super_admin
+// ============================================================================
+model Admin {
+  id           String   @id @default(uuid()) @db.Uuid
+  email        String   @unique @db.VarChar(255)
+  passwordHash String   @map("password_hash") @db.Text      // bcrypt hash，应用层处理
+  nickname     String   @db.VarChar(50)
+  role         String   @default("admin") @db.VarChar(20)   // "admin" | "super_admin"
+  status       String   @default("active") @db.VarChar(10)  // "active" | "disabled"
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  auditLogs AuditLog[]
+
+  @@map("admins")
+}
+
+// ============================================================================
+// 4. workspaces — 工作区/板块表
 // 对应 Figma: 互动列表 List-Item 中的"影视工作区"标签 (16:572)
 // 文章分类聚合，如: 影视工作区、游戏讨论区、电竞区 等
 // ============================================================================
 model Workspace {
   id          String   @id @default(uuid()) @db.Uuid
-  name        String   @db.VarChar(50)                   // 如"影视工作区"
-  slug        String   @unique @db.VarChar(50)           // URL 标识，如 yingshi
-  description String?  @db.Text                          // 板块描述
-  iconUrl     String?  @map("icon_url") @db.Text         // 板块图标
-  sortOrder   Int      @default(0) @map("sort_order")    // 前端展示排序
+  name        String   @db.VarChar(50)
+  slug        String   @unique @db.VarChar(50)
+  description String?  @db.Text
+  iconUrl     String?  @map("icon_url") @db.Text
+  sortOrder   Int      @default(0) @map("sort_order")
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz()
 
   posts Post[]
@@ -58,33 +101,33 @@ model Workspace {
 }
 
 // ============================================================================
-// 3. posts — 文章/互动帖表 (核心表)
+// 5. posts — 文章/互动帖表 (核心表)
 // 对应 Figma:
 //   - 互动列表: List-Item 卡片 (16:564) — 标题、摘要、内容
 //   - 互动发布: Textarea Field (16:632) — 正文输入
 // status 流转: draft → under_review → published / rejected → hidden
-// like_count / comment_count 为冗余字段，避免每次列表查询 COUNT
+// like_count / comment_count 冗余字段，避免每次列表查询 COUNT
 // ============================================================================
 model Post {
   id           String    @id @default(uuid()) @db.Uuid
   title        String    @db.VarChar(200)
   content      String    @db.Text
-  summary      String?   @db.Text                          // 列表卡片摘要，如 Figma 16:570
+  summary      String?   @db.Text                          // 列表卡片摘要，对应 Figma 16:570
   authorId     String    @map("author_id") @db.Uuid
   workspaceId  String?   @map("workspace_id") @db.Uuid
   status       String    @default("published") @db.VarChar(15)
   // "draft" | "published" | "under_review" | "rejected" | "hidden"
   isPinned     Boolean   @default(false) @map("is_pinned")
   viewCount    Int       @default(0) @map("view_count")
-  likeCount    Int       @default(0) @map("like_count")      // 冗余: 定时同步 likes 表
-  commentCount Int       @default(0) @map("comment_count")   // 冗余: 定时同步 comments 表
+  likeCount    Int       @default(0) @map("like_count")
+  commentCount Int       @default(0) @map("comment_count")
   publishedAt  DateTime  @default(now()) @map("published_at") @db.Timestamptz()
   createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz()
 
-  author    User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  workspace Workspace? @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
-  images    PostImage[]   // 对应 Figma 互动列表卡片中的 3 张缩略图 (16:566-568)
+  author    User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  workspace Workspace?  @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
+  images    PostImage[]  // 对应 Figma: 互动列表卡片中的 3 张缩略图 (16:566-568)
   comments  Comment[]
   tags      PostTag[]
   auditLogs AuditLog[]
@@ -95,17 +138,17 @@ model Post {
 }
 
 // ============================================================================
-// 4. post_images — 文章图片表
+// 6. post_images — 文章图片表
 // 对应 Figma:
-//   - 互动列表卡片: image 1/2/3 (16:566-568) — 每篇贴文最多展示 3 张图
-//   - 互动发布: Upload 组件 (16:586) — 上传图片按钮
-// sort_order 控制图片在列表中的展示顺序
+//   - 互动列表卡片: image 1/2/3 (16:566-568)
+//   - 互动发布: Upload 组件 (16:586)
+// 图片存储用 Supabase Storage，本表存 URL
 // ============================================================================
 model PostImage {
   id        String   @id @default(uuid()) @db.Uuid
   postId    String   @map("post_id") @db.Uuid
   imageUrl  String   @map("image_url") @db.Text
-  sortOrder Int      @default(0) @map("sort_order")  // 图片排列顺序
+  sortOrder Int      @default(0) @map("sort_order")
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
 
   post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
@@ -115,15 +158,14 @@ model PostImage {
 }
 
 // ============================================================================
-// 5. comments — 评论表
-// parent_id 自引用支持二级嵌套回复（一级评论 + 子回复）
-// like_count 为冗余字段
+// 7. comments — 评论表
+// parent_id 自引用支持二级嵌套（一级评论 + 子回复）
 // ============================================================================
 model Comment {
   id        String    @id @default(uuid()) @db.Uuid
   postId    String    @map("post_id") @db.Uuid
   authorId  String    @map("author_id") @db.Uuid
-  parentId  String?   @map("parent_id") @db.Uuid       // NULL = 一级评论，非 NULL = 回复某评论
+  parentId  String?   @map("parent_id") @db.Uuid       // NULL = 一级评论
   content   String    @db.Text
   likeCount Int       @default(0) @map("like_count")
   status    String    @default("published") @db.VarChar(10)
@@ -141,9 +183,9 @@ model Comment {
 }
 
 // ============================================================================
-// 6. likes — 点赞记录表
-// 多态关联: target_type 区分点赞目标（文章/评论）
-// UNIQUE 约束保证一人一目标只能点赞一次
+// 8. likes — 点赞记录表
+// 多态关联: target_type 区分文章/评论
+// UNIQUE 保证一人一目标只能点赞一次
 // ============================================================================
 model Like {
   id         String   @id @default(uuid()) @db.Uuid
@@ -160,33 +202,16 @@ model Like {
 }
 
 // ============================================================================
-// 7. verification_codes — 短信验证码表
-// 对应 Figma: 登录窗口中"请输入验证码"输入框 (18:65)
-// 过期时间建议 5 分钟
-// ============================================================================
-model VerificationCode {
-  id        String   @id @default(uuid()) @db.Uuid
-  phone     String   @db.VarChar(20)
-  code      String   @db.VarChar(10)
-  expiresAt DateTime @map("expires_at") @db.Timestamptz()  // 过期时间戳
-  used      Boolean  @default(false)                        // 是否已使用
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
-
-  @@index([phone, createdAt])
-  @@map("verification_codes")
-}
-
-// ============================================================================
 // 辅助表
 // ============================================================================
 
 // ----------------------------------------------------------------------------
-// 8. tags — 文章标签维度
+// 9. tags — 标签维度
 // ----------------------------------------------------------------------------
 model Tag {
   id        String    @id @default(uuid()) @db.Uuid
-  name      String    @unique @db.VarChar(30)  // 标签名
-  slug      String    @unique @db.VarChar(30)  // URL 标识
+  name      String    @unique @db.VarChar(30)
+  slug      String    @unique @db.VarChar(30)
   createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz()
 
   posts PostTag[]
@@ -195,7 +220,7 @@ model Tag {
 }
 
 // ----------------------------------------------------------------------------
-// 9. post_tags — 文章-标签关联表 (多对多)
+// 10. post_tags — 文章-标签关联 (多对多)
 // ----------------------------------------------------------------------------
 model PostTag {
   postId String @map("post_id") @db.Uuid
@@ -209,19 +234,19 @@ model PostTag {
 }
 
 // ----------------------------------------------------------------------------
-// 10. audit_logs — 审核操作日志表
-// 用于后台管理系统 /admin 的文章审核功能
+// 11. audit_logs — 审核操作日志
+// 后台管理系统 /admin 用，auditorId → admins 表
 // ----------------------------------------------------------------------------
 model AuditLog {
   id        String   @id @default(uuid()) @db.Uuid
   postId    String   @map("post_id") @db.Uuid
-  auditorId String   @map("auditor_id") @db.Uuid   // 执行审核的管理员
+  auditorId String   @map("auditor_id") @db.Uuid   // → admins.id
   action    String   @db.VarChar(10)                // "approve" | "reject" | "hide"
-  reason    String?  @db.Text                       // 审核原因 / 拒绝理由
+  reason    String?  @db.Text
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
 
-  post    Post @relation(fields: [postId], references: [id], onDelete: Cascade)
-  auditor User @relation(fields: [auditorId], references: [id])
+  post    Post  @relation(fields: [postId], references: [id], onDelete: Cascade)
+  auditor Admin @relation(fields: [auditorId], references: [id])
 
   @@map("audit_logs")
 }
