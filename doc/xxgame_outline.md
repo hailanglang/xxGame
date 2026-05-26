@@ -1,4 +1,5 @@
 我想要开发一个类似于”小黑盒-社区中心“ 的游戏中心。目前有三大模块。
+
 首页：
 负责 SEO ，能被 google 或者其他搜索引擎搜索到。
 
@@ -26,15 +27,10 @@ Next.js (React) + TailwindCSS， Vercel 部署
 小程序 + APP：
 Uni-app（你已提到）
 
-后端 API：
-Next.js API Routes 或 独立 Nest.js
-
+后端 API：Next.js API Routes 或 独立 Nest.js
 数据库 PostgreSQL(Suspabase 在线数据库)
-
 ORM: Prisma
-
 缓存： Redis
-
 全文搜索： ？
 
 后续步骤：
@@ -52,10 +48,13 @@ ORM: Prisma
 2. 再做后台管理的基础审核功能
 3. 最后做小程序/APP（Uni-app 可以复用 PC 端的 API）
 
-
 第一步清单：
+
 1. 确定技术栈（建议用上面的 Next.js + Prisma + Uni-app）
 2. 注册 Supabase 免费账号（获得数据库 + 认证）
 3. 画简单的原型草图（纸笔或 Figma，重点是理清页面跳转关系）
 4. 设计 5-7 张核心数据表（我帮你列一个初始版本？）
 5. 搭一个 Next.js 项目并成功连上数据库
+
+原型搞定: figma
+数据库设计表: Supabase
