@@ -1,9 +1,11 @@
 "use client"
 
+import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { LoginDialog } from "@/components/login-dialog"
 
 const links = [
   { href: "/", label: "首页" },
@@ -12,6 +14,7 @@ const links = [
 
 export function NavBar() {
   const pathname = usePathname()
+  const [loginOpen, setLoginOpen] = useState(false)
 
   return (
     <nav className="sticky top-0 z-50 h-[100px] bg-white border-b">
@@ -33,11 +36,16 @@ export function NavBar() {
               {link.label}
             </Link>
           ))}
-          <Button className="bg-[#E8392A] hover:bg-[#d02a1e] text-white rounded-md px-5 h-9">
+          <Button
+            onClick={() => setLoginOpen(true)}
+            className="bg-[#E8392A] hover:bg-[#d02a1e] text-white rounded-md px-5 h-9"
+          >
             登录
           </Button>
         </div>
       </div>
+
+      <LoginDialog open={loginOpen} onOpenChange={setLoginOpen} />
     </nav>
   )
 }
