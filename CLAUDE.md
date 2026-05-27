@@ -6,6 +6,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 XXGame — 类似"小黑盒"的游戏社区中心。三个平台：PC端 (Next.js)、后台管理 (/admin)、小程序/APP (Uni-app)。
 
+## Rules
+
+- **禁止使用 `npx`**，所有 CLI 命令一律使用 `pnpm dlx`。
+  - `npx prisma validate` → `pnpm dlx prisma validate`
+  - `npx shadcn add button` → `pnpm dlx shadcn add button`
+  - `npx tsx script.ts` → `pnpm dlx tsx script.ts`
+- 包管理工具为 pnpm，禁止使用 npm / yarn。
+
 ## Commands
 
 ```bash
@@ -74,7 +82,6 @@ doc/
 
 ## Development Notes
 
-- 使用 `pnpm dlx` 执行 CLI 工具，替代 `npx`（如 `pnpm dlx prisma validate`）
 - 开发阶段用 `prisma db push` 同步 schema，不创建迁移文件
 - MVP 节奏: 文章列表 + 详情 + 评论 → 后台审核 → 小程序/APP
 - 代码路径使用 `@/` 别名 (tsconfig paths 配置)
