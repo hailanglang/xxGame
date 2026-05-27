@@ -74,6 +74,7 @@ doc/
 
 ## Development Notes
 
+- 使用 `pnpm dlx` 执行 CLI 工具，替代 `npx`（如 `pnpm dlx prisma validate`）
 - 开发阶段用 `prisma db push` 同步 schema，不创建迁移文件
 - MVP 节奏: 文章列表 + 详情 + 评论 → 后台审核 → 小程序/APP
 - 代码路径使用 `@/` 别名 (tsconfig paths 配置)
