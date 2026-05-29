@@ -3,7 +3,6 @@
 import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { LoginDialog } from "@/components/login-dialog"
 
@@ -17,31 +16,36 @@ export function NavBar() {
   const [loginOpen, setLoginOpen] = useState(false)
 
   return (
-    <nav className="sticky top-0 z-50 h-[100px] bg-white border-b">
-      <div className="max-w-[1440px] mx-auto h-full flex items-center justify-between px-6">
-        <Link href="/" className="text-[32px] font-normal text-black">
+    <nav className="sticky top-0 z-50 h-16 bg-white border-b border-[#E5E7EB]">
+      <div className="max-w-[1280px] mx-auto h-full flex items-center justify-between px-8">
+        <Link
+          href="/"
+          className="text-xl font-semibold text-[#101828] leading-7"
+        >
           XXGame
         </Link>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center">
           {links.map((link) => (
             <Link
               key={link.href}
               href={link.href}
               className={cn(
-                "text-base text-black px-2 py-2",
-                pathname === link.href && "font-semibold"
+                "px-4 py-2 text-base font-medium leading-6",
+                pathname === link.href
+                  ? "text-[#FB2C36]"
+                  : "text-[#4A5565]"
               )}
             >
               {link.label}
             </Link>
           ))}
-          <Button
+          <button
             onClick={() => setLoginOpen(true)}
-            className="bg-[#E8392A] hover:bg-[#d02a1e] text-white rounded-md px-5 h-9"
+            className="ml-8 w-20 h-10 bg-[#FB2C36] hover:bg-[#e0262f] text-white text-base font-medium rounded-[10px] transition-colors"
           >
             登录
-          </Button>
+          </button>
         </div>
       </div>
 
