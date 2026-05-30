@@ -16,13 +16,16 @@ const links = [
 export function NavBar() {
   const pathname = usePathname()
   const [loginOpen, setLoginOpen] = useState(false)
+  const [mounted, setMounted] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
   const token = useUserStore((s) => s.token)
   const user = useUserStore((s) => s.user)
   const clearAuth = useUserStore((s) => s.clearAuth)
-  const isLoggedIn = !!(token && user)
+  const isLoggedIn = mounted && !!(token && user)
+
+  useEffect(() => { setMounted(true) }, [])
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
