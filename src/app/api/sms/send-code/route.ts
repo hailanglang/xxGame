@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server"
 import Unisms from "unisms"
 import { prisma } from "@/lib/prisma"
+import { DEV_CODE } from "@/lib/dev-code"
 
 const isDev = process.env.NODE_ENV !== "production"
 
@@ -29,7 +30,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 开发环境固定验证码，生产环境随机生成
-    const code = isDev ? "123456" : String(Math.floor(Math.random() * 900000 + 100000))
+    const code = isDev ? DEV_CODE : String(Math.floor(Math.random() * 900000 + 100000))
 
     // 存数据库
     await prisma.verificationCode.create({
