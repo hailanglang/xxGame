@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { CloseIcon } from "@/components/icons"
+import { useUserStore } from "@/stores/user-store"
 
 interface Props {
   open: boolean
@@ -10,6 +11,7 @@ interface Props {
 }
 
 export function LoginDialog({ open, onOpenChange }: Props) {
+  const setAuth = useUserStore((s) => s.setAuth)
   const [phone, setPhone] = useState("")
   const [code, setCode] = useState("")
   const [loading, setLoading] = useState(false)
@@ -64,8 +66,7 @@ export function LoginDialog({ open, onOpenChange }: Props) {
       })
       const data = await res.json()
       if (res.ok) {
-        localStorage.setItem("token", data.token)
-        localStorage.setItem("user", JSON.stringify(data.user))
+        setAuth(data.token, data.user)
         onOpenChange(false)
       } else {
         alert(data.error || "登录失败")

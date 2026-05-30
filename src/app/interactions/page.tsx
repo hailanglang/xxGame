@@ -1,12 +1,8 @@
-import type { Metadata } from "next"
-import Link from "next/link"
-import { prisma } from "@/lib/prisma"
-import { WorkspaceIcon, EyeIcon, HeartIcon, CommentIcon } from "@/components/icons"
+"use client"
 
-export const metadata: Metadata = {
-  title: "互动列表",
-  description: "浏览 XXGame 社区中最新的游戏讨论和影视动态",
-}
+import { useState, useEffect } from "react"
+import Link from "next/link"
+import { WorkspaceIcon, EyeIcon, HeartIcon, CommentIcon } from "@/components/icons"
 
 const categoryTabs = [
   { label: "话题分享", active: true },
@@ -15,28 +11,35 @@ const categoryTabs = [
   { label: "器材讨论", active: false },
 ]
 
-const recommendedUsers = [
-  { name: "摄影王老师", fans: "12.5K", emoji: "📸" },
-  { name: "CFJ", fans: "8.3K", emoji: "🎬" },
-  { name: "摄影师阿明", fans: "15.2K", emoji: "📷" },
-  { name: "光影追寻者", fans: "6.7K", emoji: "🌟" },
-]
+interface Post {
+  id: string
+  title: string
+  summary: string | null
+  author: { id: string; nickname: string | null; avatarUrl: string | null }
+  workspace: { id: string; name: string; slug: string } | null
+  images: { imageUrl: string; sortOrder: number }[]
+  likeCount: number
+  commentCount: number
+  viewCount: number
+  publishedAt: string
+}
 
-export default async function InteractionsPage() {
-  const posts = await prisma.post.findMany({
-    where: { status: "published" },
-    orderBy: { publishedAt: "desc" },
-    take: 20,
-    include: {
-      author: { select: { id: true, nickname: true, avatarUrl: true } },
-      workspace: { select: { id: true, name: true, slug: true } },
-      images: { orderBy: { sortOrder: "asc" }, take: 3 },
-    },
-  })
+export default function InteractionsPage() {
+  const [posts, setPosts] = useState<Post[]>([])
+  const [nextCursor, setNextCursor] = useState<string | null>(null)
+
+  useEffect(() => {
+    fetch("/api/posts?limit=20")
+      .then((res) => res.json())
+      .then((data) => {
+        setPosts(data.items)
+        setNextCursor(data.nextCursor)
+      })
+  }, [])
 
   return (
     <div className="max-w-[1280px] mx-auto px-8 py-6">
-      <div className="flex gap-6">
+      <div className="flex gap-6 justify-center">
         {/* ================================================================ */}
         {/* 左侧导航 — Figma: 182.67px, padding 16px                          */}
         {/* ================================================================ */}
@@ -150,70 +153,6 @@ export default async function InteractionsPage() {
         {/* ================================================================ */}
         {/* 右侧边栏 — Figma: 286px                                          */}
         {/* ================================================================ */}
-        <aside className="w-[286px] shrink-0 space-y-6">
-          {/* 推荐关注 */}
-          <section className="bg-white border border-[#E5E7EB] rounded-[10px] p-4">
-            <h3 className="text-lg font-semibold text-[#101828] leading-[27px]">
-              推荐关注
-            </h3>
-            <div className="mt-4 space-y-3">
-              {recommendedUsers.map((user) => (
-                <div key={user.name} className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="size-10 flex items-center justify-center bg-[#F3F4F6] rounded-full text-xl">
-                      {user.emoji}
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-[#101828] leading-5">
-                        {user.name}
-                      </p>
-                      <p className="text-xs text-[#6A7282] leading-4">
-                        {user.fans} 粉丝
-                      </p>
-                    </div>
-                  </div>
-                  <button className="w-[52px] h-7 bg-[#FB2C36] hover:bg-[#e0262f] text-white text-sm font-medium rounded transition-colors">
-                    关注
-                  </button>
-                </div>
-              ))}
-            </div>
-            <div className="mt-4 text-center">
-              <button className="text-sm font-medium text-[#4A5565] hover:text-[#101828] leading-5">
-                查看更多 →
-              </button>
-            </div>
-          </section>
-
-          {/* 扫码关注 */}
-          <section className="bg-white border border-[#E5E7EB] rounded-[10px] p-4 text-center">
-            <h3 className="text-lg font-semibold text-[#101828] leading-[27px]">
-              扫码关注我们
-            </h3>
-            <div className="mt-3 flex justify-center">
-              <div className="size-32 flex items-center justify-center bg-[#F3F4F6] rounded-[10px]">
-                <div className="size-24 bg-[#D1D5DC] rounded" />
-              </div>
-            </div>
-            <p className="mt-2 text-xs text-[#6A7282] leading-4">
-              扫描二维码下载APP
-            </p>
-          </section>
-
-          {/* 快捷入口 */}
-          <section className="bg-white border border-[#E5E7EB] rounded-[10px] p-4">
-            <div className="flex justify-around">
-              {["小星座运势", "星座运势", "热点工具"].map((item) => (
-                <button
-                  key={item}
-                  className="text-base font-medium text-[#4A5565] hover:text-[#101828] leading-6"
-                >
-                  {item}
-                </button>
-              ))}
-            </div>
-          </section>
-        </aside>
       </div>
     </div>
   )
