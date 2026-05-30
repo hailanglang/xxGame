@@ -13,6 +13,8 @@ export function LoginDialog({ open, onOpenChange }: Props) {
   const [phone, setPhone] = useState("")
   const [code, setCode] = useState("")
   const [loading, setLoading] = useState(false)
+  const [sending, setSending] = useState(false)
+  const [countdown, setCountdown] = useState(0)
   const phoneRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -21,11 +23,40 @@ export function LoginDialog({ open, onOpenChange }: Props) {
     }
   }, [open])
 
+  // 倒计时
+  useEffect(() => {
+    if (countdown <= 0) return
+    const timer = setTimeout(() => setCountdown(countdown - 1), 1000)
+    return () => clearTimeout(timer)
+  }, [countdown])
+
+  async function sendCode() {
+    if (!phone || !/^1\d{10}$/.test(phone)) return
+    setSending(true)
+    try {
+      const res = await fetch("/api/sms/send-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone }),
+      })
+      const data = await res.json()
+      if (res.ok) {
+        setCountdown(60)
+      } else {
+        alert(data.error || "发送失败")
+      }
+    } catch {
+      alert("发送失败，请稍后再试")
+    } finally {
+      setSending(false)
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!phone || !code) return
     setLoading(true)
-    // TODO: 接入真实短信 API
+    // TODO: 接入验证码校验 + 登录
     await new Promise((r) => setTimeout(r, 800))
     setLoading(false)
   }
@@ -79,9 +110,11 @@ export function LoginDialog({ open, onOpenChange }: Props) {
             />
             <button
               type="button"
-              className="w-32 h-14 shrink-0 rounded-[10px] bg-[#E5E7EB] text-[#364153] text-base font-medium hover:bg-[#D1D5DB] transition-colors"
+              disabled={sending || countdown > 0 || !phone}
+              onClick={sendCode}
+              className="w-32 h-14 shrink-0 rounded-[10px] bg-[#E5E7EB] text-[#364153] text-base font-medium hover:bg-[#D1D5DB] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              获取验证码
+              {sending ? "发送中..." : countdown > 0 ? `${countdown}s` : "获取验证码"}
             </button>
           </div>
 

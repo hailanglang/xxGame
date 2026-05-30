@@ -1,0 +1,61 @@
+import { NextRequest } from "next/server"
+import Unisms from "unisms"
+import { prisma } from "@/lib/prisma"
+
+const isDev = process.env.NODE_ENV !== "production"
+
+const unisms = isDev
+  ? null
+  : new Unisms({
+      accessKeyId: process.env.UNISMS_ACCESS_KEY_ID!,
+      accessKeySecret: process.env.UNISMS_ACCESS_KEY_SECRET!,
+    })
+
+export async function POST(request: NextRequest) {
+  try {
+    const { phone } = await request.json()
+
+    if (!phone || !/^1\d{10}$/.test(phone)) {
+      return Response.json({ error: "请输入正确的手机号码" }, { status: 400 })
+    }
+
+    // 60 秒内不允许重复发送
+    const recent = await prisma.verificationCode.findFirst({
+      where: { phone, createdAt: { gte: new Date(Date.now() - 60 * 1000) } },
+      orderBy: { createdAt: "desc" },
+    })
+    if (recent) {
+      return Response.json({ error: "验证码已发送，请60秒后再试" }, { status: 429 })
+    }
+
+    // 开发环境固定验证码，生产环境随机生成
+    const code = isDev ? "123456" : String(Math.floor(Math.random() * 900000 + 100000))
+
+    // 存数据库
+    await prisma.verificationCode.create({
+      data: {
+        phone,
+        code,
+        expiresAt: new Date(Date.now() + 5 * 60 * 1000),
+      },
+    })
+
+    // 开发环境跳过短信发送
+    if (isDev) {
+      return Response.json({ success: true })
+    }
+
+    // 生产环境发送短信
+    await unisms!.send({
+      to: phone,
+      signature: process.env.UNISMS_SIGNATURE!,
+      templateId: process.env.UNISMS_TEMPLATE_ID!,
+      templateData: { code },
+    })
+
+    return Response.json({ success: true })
+  } catch (e) {
+    console.error("发送验证码失败:", e)
+    return Response.json({ error: "发送失败，请稍后再试" }, { status: 500 })
+  }
+}
