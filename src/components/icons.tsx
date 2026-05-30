@@ -175,6 +175,50 @@ export function SmileIcon({ className }: IconProps) {
   )
 }
 
+export function PlusIcon({ className }: IconProps) {
+  return (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 20 20"
+      fill="none"
+      className={className}
+    >
+      <path
+        d="M10 4.17V15.83"
+        stroke="currentColor"
+        strokeWidth="1.67"
+        strokeLinecap="round"
+      />
+      <path
+        d="M4.17 10H15.83"
+        stroke="currentColor"
+        strokeWidth="1.67"
+        strokeLinecap="round"
+      />
+    </svg>
+  )
+}
+
+export function XSmallIcon({ className }: IconProps) {
+  return (
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 12 12"
+      fill="none"
+      className={className}
+    >
+      <path
+        d="M3 3L9 9M9 3L3 9"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+    </svg>
+  )
+}
+
 export function ChevronDownIcon({ className }: IconProps) {
   return (
     <svg

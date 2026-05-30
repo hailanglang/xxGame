@@ -2,7 +2,8 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { CloseIcon, ImageIcon, VideoIcon, SmileIcon, ChevronDownIcon } from "@/components/icons"
+import { CloseIcon, ChevronDownIcon } from "@/components/icons"
+import { CoverImageUpload } from "@/components/cover-image-upload"
 
 const categories = [
   { value: "", label: "请选择分类" },
@@ -17,6 +18,7 @@ export default function NewInteractionPage() {
   const [category, setCategory] = useState("")
   const [title, setTitle] = useState("")
   const [content, setContent] = useState("")
+  const [coverFiles, setCoverFiles] = useState<File[]>([])
   const [loading, setLoading] = useState(false)
 
   async function handleSubmit(e: React.FormEvent) {
@@ -29,113 +31,111 @@ export default function NewInteractionPage() {
   }
 
   return (
-    <div className="max-w-[896px] mx-auto p-8">
-      <form
-        onSubmit={handleSubmit}
-        className="bg-white border border-[#E5E7EB] rounded-[10px] p-8"
-      >
-        {/* 头部 — Figma: "发布内容" + 关闭按钮 */}
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-semibold text-[#101828] leading-8">
-            发布内容
-          </h1>
-          <button
-            type="button"
-            onClick={() => router.back()}
-            className="text-[#99A1AF] hover:text-[#364153] transition-colors"
-            aria-label="关闭"
-          >
-            <CloseIcon />
-          </button>
-        </div>
-
-        {/* 选择分类 — Figma: mt-6 */}
-        <div className="mt-6">
-          <label className="block text-sm font-medium text-[#364153] leading-5 mb-2">
-            选择分类
-          </label>
-          <div className="relative">
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              className="w-full h-[47px] px-4 rounded-[10px] border border-[#E5E7EB] text-base text-[#101828] bg-white appearance-none outline-none cursor-pointer"
+    <>
+      {/* 内容区域 */}
+      <div className="max-w-[896px] mx-auto px-8 py-6 pb-[80px]">
+        <form
+          onSubmit={handleSubmit}
+          className="bg-white border border-[#E5E7EB] rounded-[10px] p-5"
+        >
+          {/* 头部 — Figma: "发布内容" 20px Semi Bold + 关闭按钮 */}
+          <div className="flex items-center justify-between">
+            <h1 className="text-xl font-semibold text-[#101828] leading-7">
+              发布内容
+            </h1>
+            <button
+              type="button"
+              onClick={() => router.back()}
+              className="text-[#99A1AF] hover:text-[#364153] transition-colors"
+              aria-label="关闭"
             >
-              {categories.map((c) => (
-                <option key={c.value} value={c.value}>
-                  {c.label}
-                </option>
-              ))}
-            </select>
-            <ChevronDownIcon className="absolute right-4 top-1/2 -translate-y-1/2 text-[#99A1AF] pointer-events-none" />
+              <CloseIcon className="size-5" />
+            </button>
           </div>
-        </div>
 
-        {/* 标题 — Figma: mt-6 */}
-        <div className="mt-6">
-          <label className="block text-sm font-medium text-[#364153] leading-5 mb-2">
-            标题
-          </label>
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="请输入标题（必填）"
-            className="w-full h-[49px] px-4 py-3 rounded-[10px] border border-[#E5E7EB] text-base text-[#101828] placeholder-[rgba(10,10,10,0.5)] outline-none"
-          />
-        </div>
+          {/* 封面 — Figma: 水平布局, label 80px + 上传区, pt-5 */}
+          <div className="flex gap-4 pt-5">
+            <span className="w-20 shrink-0 pt-2 text-sm font-medium text-[#364153] leading-5">
+              封面
+            </span>
+            <div className="flex-1">
+              <CoverImageUpload
+                value={coverFiles}
+                onValueChange={setCoverFiles}
+              />
+            </div>
+          </div>
 
-        {/* 内容 — Figma: mt-6 */}
-        <div className="mt-6">
-          <label className="block text-sm font-medium text-[#364153] leading-5 mb-2">
-            内容
-          </label>
-          <textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            placeholder="分享你的想法...（必填）"
-            rows={8}
-            className="w-full h-[217px] px-4 py-3 rounded-[10px] border border-[#E5E7EB] text-base text-[#101828] placeholder-[rgba(10,10,10,0.5)] outline-none resize-none leading-6"
-          />
-        </div>
-
-        {/* 媒体工具栏 — Figma: mt-6, border-b, pb-6 */}
-        <div className="mt-6 border-b border-[#E5E7EB] pb-6">
-          <div className="flex items-center gap-4">
-            {[
-              { icon: ImageIcon, label: "图片" },
-              { icon: VideoIcon, label: "视频" },
-              { icon: SmileIcon, label: "表情" },
-            ].map(({ icon: Icon, label }) => (
-              <button
-                key={label}
-                type="button"
-                className="flex items-center gap-2 px-4 py-2 rounded-[10px] text-[#4A5565] hover:bg-[#F3F4F6] transition-colors"
+          {/* 选择分类 — Figma: 水平布局, h-12, pt-3 */}
+          <div className="flex items-center gap-4 pt-3">
+            <span className="w-20 shrink-0 text-sm font-medium text-[#364153] leading-5">
+              选择分类
+            </span>
+            <div className="relative flex-1">
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                className="w-full h-9 px-3 rounded-[10px] border border-[#E5E7EB] text-sm text-[#101828] bg-white appearance-none outline-none cursor-pointer"
               >
-                <Icon className="text-[#4A5565]" />
-                <span className="text-sm font-medium leading-5">{label}</span>
-              </button>
-            ))}
+                {categories.map((c) => (
+                  <option key={c.value} value={c.value}>
+                    {c.label}
+                  </option>
+                ))}
+              </select>
+              <ChevronDownIcon className="absolute right-3 top-1/2 -translate-y-1/2 size-4 text-[#99A1AF] pointer-events-none" />
+            </div>
           </div>
-        </div>
 
-        {/* 操作按钮 — Figma: mt-6, justify-end */}
-        <div className="mt-6 flex justify-end gap-4">
+          {/* 标题 — Figma: 水平布局, pt-3 */}
+          <div className="flex items-center gap-4 pt-3">
+            <span className="w-20 shrink-0 text-sm font-medium text-[#364153] leading-5">
+              标题
+            </span>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="请输入标题（必填）"
+              className="flex-1 h-[37px] px-3 py-2 rounded-[10px] border border-[#E5E7EB] text-sm text-[#101828] placeholder-[rgba(10,10,10,0.5)] outline-none"
+            />
+          </div>
+
+          {/* 内容 — Figma: 水平布局, h-[161px], py-3 */}
+          <div className="flex gap-4 py-3">
+            <span className="w-20 shrink-0 pt-2 text-sm font-medium text-[#364153] leading-5">
+              内容
+            </span>
+            <textarea
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              placeholder="分享你的想法...（必填）"
+              className="flex-1 h-[260px] px-3 py-2 rounded-[10px] border border-[#E5E7EB] text-sm text-[#101828] placeholder-[rgba(10,10,10,0.5)] outline-none resize-none leading-5"
+            />
+          </div>
+        </form>
+      </div>
+
+      {/* 底部固定操作栏 — Figma: sticky bottom, border-t, shadow */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#E5E7EB] shadow-[0_4px_6px_-4px_rgba(0,0,0,0.1),0_10px_15px_-3px_rgba(0,0,0,0.1)]">
+        <div className="max-w-[896px] mx-auto px-4 py-3 flex justify-end gap-3">
           <button
             type="button"
             onClick={() => router.back()}
-            className="w-20 h-12 rounded-[10px] text-base font-medium text-[#364153] hover:bg-[#F3F4F6] transition-colors"
+            className="w-[68px] h-9 rounded-[10px] text-sm font-medium text-[#364153] hover:bg-[#F3F4F6] transition-colors"
           >
             取消
           </button>
           <button
             type="submit"
             disabled={loading || !title || !content}
-            className="w-24 h-12 rounded-[10px] bg-[#FB2C36] hover:bg-[#e0262f] text-white text-base font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            onClick={handleSubmit}
+            className="w-[76px] h-9 rounded-[10px] bg-[#FB2C36] hover:bg-[#e0262f] text-white text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {loading ? "提交中..." : "发布"}
           </button>
         </div>
-      </form>
-    </div>
+      </div>
+    </>
   )
 }
