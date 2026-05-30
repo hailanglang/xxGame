@@ -56,9 +56,25 @@ export function LoginDialog({ open, onOpenChange }: Props) {
     e.preventDefault()
     if (!phone || !code) return
     setLoading(true)
-    // TODO: 接入验证码校验 + 登录
-    await new Promise((r) => setTimeout(r, 800))
-    setLoading(false)
+    try {
+      const res = await fetch("/api/auth/verify-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone, code }),
+      })
+      const data = await res.json()
+      if (res.ok) {
+        localStorage.setItem("token", data.token)
+        localStorage.setItem("user", JSON.stringify(data.user))
+        onOpenChange(false)
+      } else {
+        alert(data.error || "登录失败")
+      }
+    } catch {
+      alert("登录失败，请稍后再试")
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
