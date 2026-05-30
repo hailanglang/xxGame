@@ -64,7 +64,7 @@ export function LoginDialog({ open, onOpenChange }: Props) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="sm:max-w-[448px] gap-0 p-6 rounded-2xl bg-white shadow-[0_8px_10px_-6px_rgba(0,0,0,0.1),0_20px_25px_-5px_rgba(0,0,0,0.1)] border-0"
+        className="sm:max-w-[448px] gap-0 p-6 rounded-2xl bg-white shadow-[0_8px_10px_-6px_rgba(0,0,0,0.1),0_20px_25px_-5px_rgba(0,0,0,0.1)] border-0 ring-0"
         showCloseButton={false}
       >
         <DialogTitle className="sr-only">登录 / 注册</DialogTitle>
@@ -72,10 +72,10 @@ export function LoginDialog({ open, onOpenChange }: Props) {
         {/* 关闭按钮 — Figma: x:408, y:16, 24x24 */}
         <button
           onClick={() => onOpenChange(false)}
-          className="absolute top-4 right-4 size-6 flex items-center justify-center text-[#101828] hover:text-[#364153] transition-colors"
+          className="absolute top-4 right-4 flex items-center justify-center text-[#101828] hover:text-[#364153] transition-colors cursor-pointer"
           aria-label="关闭"
         >
-          <CloseIcon />
+          <CloseIcon className="size-8" />
         </button>
 
         {/* 标题 — Figma: "验证码登录" 16px Semi Bold + 下划线指示器 */}
@@ -112,7 +112,7 @@ export function LoginDialog({ open, onOpenChange }: Props) {
               type="button"
               disabled={sending || countdown > 0 || !phone}
               onClick={sendCode}
-              className="w-32 h-14 shrink-0 rounded-[10px] bg-[#E5E7EB] text-[#364153] text-base font-medium hover:bg-[#D1D5DB] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="w-32 h-14 shrink-0 rounded-[10px] bg-[#E5E7EB] text-[#364153] text-base font-medium hover:bg-[#D1D5DB] disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
             >
               {sending ? "发送中..." : countdown > 0 ? `${countdown}s` : "获取验证码"}
             </button>
@@ -122,7 +122,7 @@ export function LoginDialog({ open, onOpenChange }: Props) {
           <button
             type="submit"
             disabled={loading || !phone || !code}
-            className="w-full h-14 rounded-[10px] bg-[#1E2939] text-white text-base font-medium hover:bg-[#374151] disabled:opacity-50 disabled:cursor-not-allowed transition-colors mt-[52px]"
+            className="w-full h-14 rounded-[10px] bg-[#1E2939] text-white text-base font-medium hover:bg-[#374151] disabled:opacity-50 disabled:cursor-not-allowed transition-colors mt-[32px] cursor-pointer"
           >
             {loading ? (
               <span className="flex items-center justify-center gap-2">
