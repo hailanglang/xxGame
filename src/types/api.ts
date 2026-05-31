@@ -28,6 +28,7 @@ export interface PostItem {
   author: Author
   workspace: { id: string; name: string; slug: string } | null
   images: string[]
+  viewCount: number
   likeCount: number
   commentCount: number
   publishedAt: Date

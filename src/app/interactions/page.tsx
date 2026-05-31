@@ -76,11 +76,11 @@ export default function InteractionsPage() {
                   <article className="bg-white border border-[#E5E7EB] rounded-[10px] p-6 hover:shadow-md transition-shadow">
                     {/* 图片行 — Figma: 3张, 每张约 211x119px, gap 8px */}
                     {post.images.length > 0 && (
-                      <div className="flex gap-2">
+                      <div className="grid grid-cols-3 gap-2">
                         {post.images.slice(0, 3).map((url, i) => (
                           <div
                             key={i}
-                            className="flex-1 h-[119px] bg-[#F3F4F6] rounded-[10px] overflow-hidden"
+                            className="h-[119px] bg-[#F3F4F6] rounded-[10px] overflow-hidden"
                           >
                             <img
                               src={url}
