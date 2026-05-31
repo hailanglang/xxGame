@@ -1,16 +1,17 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import {
   FileUpload,
   FileUploadDropzone,
   FileUploadTrigger,
 } from "@/components/ui/file-upload"
 import { PlusIcon, XSmallIcon } from "@/components/icons"
+import { api } from "@/lib/api-client"
 
 interface CoverImageUploadProps {
-  value?: File[]
-  onValueChange?: (files: File[]) => void
+  value?: string[]
+  onValueChange?: (urls: string[]) => void
   maxFiles?: number
 }
 
@@ -19,26 +20,38 @@ export function CoverImageUpload({
   onValueChange,
   maxFiles = 9,
 }: CoverImageUploadProps) {
-  const [files, setFiles] = useState<File[]>(value ?? [])
-  const [previews, setPreviews] = useState<string[]>([])
+  const [urls, setUrls] = useState<string[]>(value ?? [])
+  const [uploading, setUploading] = useState(false)
 
-  const isControlled = value !== undefined
-  const currentFiles = isControlled ? value : files
+  const currentUrls = value !== undefined ? value : urls
 
-  useEffect(() => {
-    const urls = currentFiles.map((f) => URL.createObjectURL(f))
-    setPreviews(urls)
-    return () => urls.forEach((u) => URL.revokeObjectURL(u))
-  }, [currentFiles])
-
-  function handleValueChange(newFiles: File[]) {
-    if (!isControlled) setFiles(newFiles)
-    onValueChange?.(newFiles)
+  async function handleFilesChange(newFiles: File[]) {
+    setUploading(true)
+    const newUrls: string[] = []
+    console.log('newFiles', newFiles)
+    for (const file of newFiles) {
+      const formData = new FormData()
+      formData.append("file", file)
+      try {
+        const data = await api<{ imageUrl: string }>("/api/upload", {
+          method: "POST",
+          body: formData,
+        })
+        newUrls.push(data.imageUrl)
+      } catch {
+        // 单张失败跳过
+      }
+    }
+    const all = [...currentUrls, ...newUrls]
+    if (value === undefined) setUrls(all)
+    onValueChange?.(all)
+    setUploading(false)
   }
 
-  function removeFile(index: number) {
-    const next = currentFiles.filter((_, i) => i !== index)
-    handleValueChange(next)
+  function removeUrl(index: number) {
+    const next = currentUrls.filter((_, i) => i !== index)
+    if (value === undefined) setUrls(next)
+    onValueChange?.(next)
   }
 
   return (
@@ -46,28 +59,19 @@ export function CoverImageUpload({
       maxFiles={maxFiles}
       maxSize={5 * 1024 * 1024}
       accept="image/*"
-      value={currentFiles}
-      onValueChange={handleValueChange}
+      onValueChange={handleFilesChange}
       multiple={maxFiles > 1}
     >
-      <div className="flex gap-2">
-        {/* 已上传的图片 — Figma: 96x96, rounded 10px */}
-        {currentFiles.map((_, index) => (
+      <div className="flex gap-2 flex-wrap">
+        {currentUrls.map((url, index) => (
           <div
-            key={index}
+            key={url}
             className="relative size-24 shrink-0 rounded-[10px] overflow-hidden bg-[#101828]"
           >
-            {previews[index] ? (
-              <img
-                src={previews[index]}
-                alt=""
-                className="size-full object-cover"
-              />
-            ) : null}
-            {/* 删除按钮 — Figma: 20x20, bg rgba(0,0,0,0.6), rounded 4px, 右上角 */}
+            <img src={url} alt="" className="size-full object-cover" />
             <button
               type="button"
-              onClick={() => removeFile(index)}
+              onClick={() => removeUrl(index)}
               className="absolute top-1 right-1 size-5 flex items-center justify-center rounded bg-black/60 hover:bg-black/80 text-white transition-colors"
             >
               <XSmallIcon />
@@ -75,11 +79,14 @@ export function CoverImageUpload({
           </div>
         ))}
 
-        {/* 上传占位 — Figma: 96x96, 虚线边框, bg #F9FAFB */}
-        {currentFiles.length < maxFiles && (
+        {currentUrls.length < maxFiles && (
           <FileUploadDropzone className="size-24 shrink-0 rounded-[10px] border-2 border-dashed border-[#D1D5DC] bg-[#F9FAFB] hover:bg-[#F3F4F6] flex items-center justify-center p-0 cursor-pointer transition-colors">
             <FileUploadTrigger className="size-full flex items-center justify-center">
-              <PlusIcon className="text-[#99A1AF]" />
+              {uploading ? (
+                <span className="size-4 border-2 border-[#99A1AF]/30 border-t-[#99A1AF] rounded-full animate-spin" />
+              ) : (
+                <PlusIcon className="text-[#99A1AF]" />
+              )}
             </FileUploadTrigger>
           </FileUploadDropzone>
         )}

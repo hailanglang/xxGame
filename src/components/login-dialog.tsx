@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, type FormEvent } from "react"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { CloseIcon } from "@/components/icons"
 import { useUserStore } from "@/stores/user-store"
+import { api } from "@/lib/api-client"
 
 interface Props {
   open: boolean
@@ -36,15 +37,10 @@ export function LoginDialog({ open, onOpenChange }: Props) {
     if (!phone || !/^1\d{10}$/.test(phone)) return
     setSending(true)
     try {
-      const res = await fetch("/api/sms/send-code", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone }),
-      })
-      const data = await res.json()
-      if (res.ok) {
+      try {
+        await api("/api/sms/send-code", { method: "POST", body: { phone } })
         setCountdown(60)
-      } else {
+      } catch (data: any) {
         alert(data.error || "发送失败")
       }
     } catch {
@@ -59,16 +55,14 @@ export function LoginDialog({ open, onOpenChange }: Props) {
     if (!phone || !code) return
     setLoading(true)
     try {
-      const res = await fetch("/api/auth/verify-code", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone, code }),
-      })
-      const data = await res.json()
-      if (res.ok) {
+      try {
+        const data = await api<any>("/api/auth/verify-code", {
+          method: "POST",
+          body: { phone, code },
+        })
         setAuth(data.token, data.user)
         onOpenChange(false)
-      } else {
+      } catch (data: any) {
         alert(data.error || "登录失败")
       }
     } catch {
