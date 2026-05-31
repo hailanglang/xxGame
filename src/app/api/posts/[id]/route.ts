@@ -28,7 +28,7 @@ export async function GET(
       summary: post.summary,
       author: post.author,
       workspace: post.workspace,
-      images: post.images.map((i) => i.imageUrl),
+      images: post.images.map((i:{ imageUrl: string }) => i.imageUrl),
       viewCount: post.viewCount,
       likeCount: post.likeCount,
       commentCount: post.commentCount,

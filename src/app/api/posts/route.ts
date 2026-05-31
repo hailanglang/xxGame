@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
         summary: p.summary,
         author: p.author,
         workspace: p.workspace,
-        images: p.images.map((i) => i.imageUrl),
+        images: p.images.map((i: { imageUrl: string }) => i.imageUrl),
         viewCount: p.viewCount,
         likeCount: p.likeCount,
         commentCount: p.commentCount,
