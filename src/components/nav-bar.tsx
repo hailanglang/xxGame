@@ -10,7 +10,7 @@ import { UserIcon, LogoutIcon } from "@/components/icons"
 
 const links = [
   { href: "/", label: "首页" },
-  { href: "/interactions", label: "互动" },
+  { href: "/web/interactions", label: "互动" },
 ]
 
 export function NavBar() {

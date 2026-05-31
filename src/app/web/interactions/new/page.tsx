@@ -34,7 +34,7 @@ export default function NewInteractionPage() {
           body: { title, content, category, images: coverUrls },
         })
         toast.success("发布成功")
-        router.push("/interactions")
+        router.push("/web/interactions")
       } catch (data: any) {
         toast.error(data.error || "发布失败")
       }

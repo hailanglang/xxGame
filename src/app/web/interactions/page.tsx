@@ -79,7 +79,7 @@ export default function InteractionsPage() {
                 toast.error("请登录后进行内容发布")
                 return
               }
-              router.push("/interactions/new")
+              router.push("/web/interactions/new")
             }}
             className="mt-3 block w-full h-10 bg-[#FB2C36] hover:bg-[#e0262f] text-white text-base font-medium rounded-[10px] transition-colors flex items-center justify-center cursor-pointer"
           >
@@ -106,7 +106,7 @@ export default function InteractionsPage() {
               {posts.map((post) => (
                 <div
                   key={post.id}
-                  onClick={() => router.push(`/interactions/${post.id}`)}
+                  onClick={() => router.push(`/web/interactions/${post.id}`)}
                   className="block cursor-pointer"
                 >
                   <article className="bg-white border border-[#E5E7EB] rounded-[10px] p-6 hover:shadow-md transition-shadow">
