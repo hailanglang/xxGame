@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: "参数错误" } satisfies ApiError, { status: 400 })
     }
 
-    if (!isDev || code !== DEV_CODE) {
+    if (code !== DEV_CODE) {
       const record = await prisma.verificationCode.findFirst({
         where: {
           phone,

@@ -107,6 +107,7 @@ export function LoginDialog({ open, onOpenChange }: Props) {
           <input
             ref={phoneRef}
             type="tel"
+            maxLength={11}
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             placeholder="请输入手机号码"
@@ -117,26 +118,33 @@ export function LoginDialog({ open, onOpenChange }: Props) {
           <div className="flex gap-2">
             <input
               type="text"
+              maxLength={6}
               value={code}
               onChange={(e) => setCode(e.target.value)}
               placeholder="请输入验证码"
               className="flex-1 h-14 px-4 rounded-[10px] bg-[#F9FAFB] text-base text-[#101828] placeholder-[#99A1AF] outline-none"
             />
+            {/* disabled={sending || countdown > 0 || !phone}
+              onClick={sendCode} */}
             <button
               type="button"
-              disabled={sending || countdown > 0 || !phone}
-              onClick={sendCode}
-              className="w-32 h-14 shrink-0 rounded-[10px] bg-[#E5E7EB] text-[#364153] text-base font-medium hover:bg-[#D1D5DB] disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
+              disabled
+              className="w-32 h-14 shrink-0 rounded-[10px] bg-[#E5E7EB] text-[#364153] text-base font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              {sending ? "发送中..." : countdown > 0 ? `${countdown}s` : "获取验证码"}
+              获取验证码
             </button>
           </div>
+
+          {/* 提示文案 */}
+          <p className="text-sm text-[#99A1AF] leading-5">
+            提示：验证码功能尚未完成，验证码输入 123456 即可登录/注册
+          </p>
 
           {/* 登录按钮 — Figma: 全宽 56px, bg #1E2939, radius 10px */}
           <button
             type="submit"
             disabled={loading || !phone || !code}
-            className="w-full h-14 rounded-[10px] bg-[#1E2939] text-white text-base font-medium hover:bg-[#374151] disabled:opacity-50 disabled:cursor-not-allowed transition-colors mt-[32px] cursor-pointer"
+            className="w-full h-14 rounded-[10px] bg-[#1E2939] text-white text-base font-medium hover:bg-[#374151] disabled:opacity-50 disabled:cursor-not-allowed transition-colors mt-[6px] cursor-pointer"
           >
             {loading ? (
               <span className="flex items-center justify-center gap-2">
