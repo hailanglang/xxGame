@@ -1,12 +1,13 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { WorkspaceIcon, EyeIcon, HeartIcon, CommentIcon } from "@/components/icons"
 import { api } from "@/lib/api-client"
 import type { PostItem, PostsResponse } from "@/types/api"
 import { toast } from "sonner"
 import { Skeleton } from "@/components/ui/skeleton"
+import { useUserStore } from "@/stores/user-store"
 
 const categoryTabs = [
   { label: "话题分享", active: true },
@@ -31,6 +32,7 @@ function PostSkeleton() {
 }
 
 export default function InteractionsPage() {
+  const router = useRouter()
   const [posts, setPosts] = useState<PostItem[]>([])
   const [nextCursor, setNextCursor] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -70,12 +72,19 @@ export default function InteractionsPage() {
           </nav>
 
           {/* 发布按钮 — 与 nav-bar 登录按钮相同样式 */}
-          <Link
-            href="/interactions/new"
-            className="mt-3 block w-full h-10 bg-[#FB2C36] hover:bg-[#e0262f] text-white text-base font-medium rounded-[10px] transition-colors flex items-center justify-center"
+          <button
+            onClick={() => {
+              const token = useUserStore.getState().token
+              if (!token) {
+                toast.error("请登录后进行内容发布")
+                return
+              }
+              router.push("/interactions/new")
+            }}
+            className="mt-3 block w-full h-10 bg-[#FB2C36] hover:bg-[#e0262f] text-white text-base font-medium rounded-[10px] transition-colors flex items-center justify-center cursor-pointer"
           >
             发布内容
-          </Link>
+          </button>
         </aside>
 
         {/* ================================================================ */}
@@ -95,10 +104,10 @@ export default function InteractionsPage() {
           ) : (
             <div className="space-y-6">
               {posts.map((post) => (
-                <Link
+                <div
                   key={post.id}
-                  href={`/interactions/${post.id}`}
-                  className="block"
+                  onClick={() => router.push(`/interactions/${post.id}`)}
+                  className="block cursor-pointer"
                 >
                   <article className="bg-white border border-[#E5E7EB] rounded-[10px] p-6 hover:shadow-md transition-shadow">
                     {/* 图片行 — Figma: 3张, 每张约 211x119px, gap 8px */}
@@ -158,7 +167,7 @@ export default function InteractionsPage() {
                       </div>
                     </div>
                   </article>
-                </Link>
+                </div>
               ))}
             </div>
           )}

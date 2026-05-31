@@ -12,6 +12,8 @@ export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData()
     const file = formData.get("file") as File | null
+    const fileHash = formData.get("fileHash") as string | null
+
     if (!file) {
       return Response.json({ error: "请选择文件" }, { status: 400 })
     }
@@ -24,12 +26,14 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: "文件不能超过 5MB" }, { status: 400 })
     }
 
+    // 使用 hash 作为文件名实现去重
     const ext = file.name.split(".").pop() || "jpg"
-    const path = `${crypto.randomUUID()}.${ext}`
+    const hash = fileHash || crypto.randomUUID()
+    const path = `${hash}.${ext}`
 
     const { data, error } = await supabase.storage
       .from("media")
-      .upload(path, file, { contentType: file.type, upsert: false })
+      .upload(path, file, { contentType: file.type, upsert: true })
 
     if (error) throw error
 

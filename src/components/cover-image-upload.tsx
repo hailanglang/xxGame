@@ -9,6 +9,7 @@ import {
 import { PlusIcon, XSmallIcon } from "@/components/icons"
 import { api } from "@/lib/api-client"
 import type { UploadResponse } from "@/types/api"
+import { computeFileHash } from "@/lib/file-hash"
 
 interface CoverImageUploadProps {
   value?: string[]
@@ -33,6 +34,8 @@ export function CoverImageUpload({
     for (const file of newFiles) {
       const formData = new FormData()
       formData.append("file", file)
+      const hash = await computeFileHash(file)
+      formData.append("fileHash", hash)
       try {
         const data = await api<UploadResponse>("/api/upload", {
           method: "POST",
