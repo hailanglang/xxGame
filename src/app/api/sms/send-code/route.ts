@@ -2,6 +2,7 @@ import { NextRequest } from "next/server"
 import Unisms from "unisms"
 import { prisma } from "@/lib/prisma"
 import { DEV_CODE } from "@/lib/dev-code"
+import type { SendCodeResponse, ApiError } from "@/types/api"
 
 const isDev = process.env.NODE_ENV !== "production"
 
@@ -17,7 +18,7 @@ export async function POST(request: NextRequest) {
     const { phone } = await request.json()
 
     if (!phone || !/^1\d{10}$/.test(phone)) {
-      return Response.json({ error: "请输入正确的手机号码" }, { status: 400 })
+      return Response.json({ error: "请输入正确的手机号码" } satisfies ApiError, { status: 400 })
     }
 
     // 60 秒内不允许重复发送
@@ -26,7 +27,7 @@ export async function POST(request: NextRequest) {
       orderBy: { createdAt: "desc" },
     })
     if (recent) {
-      return Response.json({ error: "验证码已发送，请60秒后再试" }, { status: 429 })
+      return Response.json({ error: "验证码已发送，请60秒后再试" } satisfies ApiError, { status: 429 })
     }
 
     // 开发环境固定验证码，生产环境随机生成
@@ -43,7 +44,7 @@ export async function POST(request: NextRequest) {
 
     // 开发环境跳过短信发送
     if (isDev) {
-      return Response.json({ success: true })
+      return Response.json({ success: true } satisfies SendCodeResponse)
     }
 
     // 生产环境发送短信
@@ -54,9 +55,9 @@ export async function POST(request: NextRequest) {
       templateData: { code },
     })
 
-    return Response.json({ success: true })
+    return Response.json({ success: true } satisfies SendCodeResponse)
   } catch (e) {
     console.error("发送验证码失败:", e)
-    return Response.json({ error: "发送失败，请稍后再试" }, { status: 500 })
+    return Response.json({ error: "发送失败，请稍后再试" } satisfies ApiError, { status: 500 })
   }
 }

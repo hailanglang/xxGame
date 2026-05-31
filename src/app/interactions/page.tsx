@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { WorkspaceIcon, EyeIcon, HeartIcon, CommentIcon } from "@/components/icons"
 import { api } from "@/lib/api-client"
+import type { PostItem, PostsResponse } from "@/types/api"
 
 const categoryTabs = [
   { label: "话题分享", active: true },
@@ -12,25 +13,12 @@ const categoryTabs = [
   { label: "器材讨论", active: false },
 ]
 
-interface Post {
-  id: string
-  title: string
-  summary: string | null
-  author: { id: string; nickname: string | null; avatarUrl: string | null }
-  workspace: { id: string; name: string; slug: string } | null
-  images: { imageUrl: string; sortOrder: number }[]
-  likeCount: number
-  commentCount: number
-  viewCount: number
-  publishedAt: string
-}
-
 export default function InteractionsPage() {
-  const [posts, setPosts] = useState<Post[]>([])
+  const [posts, setPosts] = useState<PostItem[]>([])
   const [nextCursor, setNextCursor] = useState<string | null>(null)
 
   useEffect(() => {
-    api("/api/posts?limit=20").then((data: any) => {
+    api<PostsResponse>("/api/posts?limit=20").then((data) => {
       setPosts(data.items)
       setNextCursor(data.nextCursor)
     })
@@ -87,22 +75,22 @@ export default function InteractionsPage() {
                 >
                   <article className="bg-white border border-[#E5E7EB] rounded-[10px] p-6 hover:shadow-md transition-shadow">
                     {/* 图片行 — Figma: 3张, 每张约 211x119px, gap 8px */}
-                    <div className="flex gap-2">
-                      {Array.from({ length: 3 }).map((_, i) => (
-                        <div
-                          key={i}
-                          className="flex-1 h-[119px] bg-[#F3F4F6] rounded-[10px] overflow-hidden"
-                        >
-                          {post.images[i] ? (
+                    {post.images.length > 0 && (
+                      <div className="flex gap-2">
+                        {post.images.slice(0, 3).map((url, i) => (
+                          <div
+                            key={i}
+                            className="flex-1 h-[119px] bg-[#F3F4F6] rounded-[10px] overflow-hidden"
+                          >
                             <img
-                              src={post.images[i].imageUrl}
+                              src={url}
                               alt=""
                               className="w-full h-full object-cover"
                             />
-                          ) : null}
-                        </div>
-                      ))}
-                    </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
 
                     {/* 标题 — Figma: 20px Semi Bold, #101828, mt-4 */}
                     <h2 className="mt-4 text-xl font-semibold text-[#101828] leading-7">

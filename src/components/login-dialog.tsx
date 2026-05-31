@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { CloseIcon } from "@/components/icons"
 import { useUserStore } from "@/stores/user-store"
 import { api } from "@/lib/api-client"
+import type { VerifyCodeResponse } from "@/types/api"
 
 interface Props {
   open: boolean
@@ -56,7 +57,7 @@ export function LoginDialog({ open, onOpenChange }: Props) {
     setLoading(true)
     try {
       try {
-        const data = await api<any>("/api/auth/verify-code", {
+        const data = await api<VerifyCodeResponse>("/api/auth/verify-code", {
           method: "POST",
           body: { phone, code },
         })

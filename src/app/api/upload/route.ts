@@ -1,11 +1,12 @@
 import { NextRequest } from "next/server"
 import { getUserFromHeaders } from "@/lib/auth"
 import { supabase } from "@/lib/supabase"
+import type { UploadResponse, ApiError } from "@/types/api"
 
 export async function POST(request: NextRequest) {
   const user = await getUserFromHeaders(request)
   if (!user) {
-    return Response.json({ error: "请先登录" }, { status: 401 })
+    return Response.json({ error: "请先登录" } satisfies ApiError, { status: 401 })
   }
 
   try {
@@ -36,9 +37,9 @@ export async function POST(request: NextRequest) {
       .from("media")
       .getPublicUrl(data.path)
 
-    return Response.json({ imageUrl: urlData.publicUrl })
+    return Response.json({ imageUrl: urlData.publicUrl } satisfies UploadResponse)
   } catch (e) {
     console.error("upload error:", e)
-    return Response.json({ error: "上传失败" }, { status: 500 })
+    return Response.json({ error: "上传失败" } satisfies ApiError, { status: 500 })
   }
 }

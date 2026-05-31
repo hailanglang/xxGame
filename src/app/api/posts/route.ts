@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma"
 import { NextRequest } from "next/server"
 import { getUserFromHeaders } from "@/lib/auth"
+import type { PostsResponse, CreatePostResponse, ApiError } from "@/types/api"
 
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl
@@ -23,7 +24,7 @@ export async function GET(request: NextRequest) {
     const hasMore = posts.length > limit
     const items = hasMore ? posts.slice(0, limit) : posts
 
-    return Response.json({
+    const body: PostsResponse = {
       items: items.map((p) => ({
         id: p.id,
         title: p.title,
@@ -36,9 +37,10 @@ export async function GET(request: NextRequest) {
         publishedAt: p.publishedAt,
       })),
       nextCursor: hasMore ? items[items.length - 1].id : null,
-    })
+    }
+    return Response.json(body)
   } catch (e) {
-    return Response.json({ error: String(e) }, { status: 500 })
+    return Response.json({ error: String(e) } satisfies ApiError, { status: 500 })
   }
 }
 
@@ -73,9 +75,9 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    return Response.json(post)
+    return Response.json(post satisfies CreatePostResponse)
   } catch (e) {
     console.error("create post error:", e)
-    return Response.json({ error: "发布失败" }, { status: 500 })
+    return Response.json({ error: "发布失败" } satisfies ApiError, { status: 500 })
   }
 }

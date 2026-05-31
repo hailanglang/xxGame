@@ -2,6 +2,7 @@ import { NextRequest } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { signJWT } from "@/lib/jwt"
 import { DEV_CODE } from "@/lib/dev-code"
+import type { VerifyCodeResponse, ApiError } from "@/types/api"
 
 
 const isDev = process.env.NODE_ENV !== "production"
@@ -16,7 +17,7 @@ export async function POST(request: NextRequest) {
     const { phone, code } = await request.json()
 
     if (!phone || !code || !/^1\d{10}$/.test(phone)) {
-      return Response.json({ error: "参数错误" }, { status: 400 })
+      return Response.json({ error: "参数错误" } satisfies ApiError, { status: 400 })
     }
 
     if (!isDev || code !== DEV_CODE) {
@@ -30,11 +31,11 @@ export async function POST(request: NextRequest) {
       })
 
       if (!record) {
-        return Response.json({ error: "请先获取验证码" }, { status: 401 })
+        return Response.json({ error: "请先获取验证码" } satisfies ApiError, { status: 401 })
       }
 
       if (record.code !== code) {
-        return Response.json({ error: "验证码错误" }, { status: 401 })
+        return Response.json({ error: "验证码错误" } satisfies ApiError, { status: 401 })
       }
 
       await prisma.verificationCode.update({
@@ -53,7 +54,7 @@ export async function POST(request: NextRequest) {
     })
 
     if (user.status === "banned") {
-      return Response.json({ error: "账号已被禁用" }, { status: 403 })
+      return Response.json({ error: "账号已被禁用" } satisfies ApiError, { status: 403 })
     }
 
     const token = await signJWT({
@@ -62,7 +63,7 @@ export async function POST(request: NextRequest) {
       role: user.role,
     })
 
-    return Response.json({
+    const body: VerifyCodeResponse = {
       token,
       user: {
         id: user.id,
@@ -70,9 +71,10 @@ export async function POST(request: NextRequest) {
         nickname: user.nickname,
         role: user.role,
       },
-    })
+    }
+    return Response.json(body)
   } catch (e) {
     console.error("verify-code error:", e)
-    return Response.json({ error: "服务异常，请稍后再试" }, { status: 500 })
+    return Response.json({ error: "服务异常，请稍后再试" } satisfies ApiError, { status: 500 })
   }
 }

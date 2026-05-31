@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/file-upload"
 import { PlusIcon, XSmallIcon } from "@/components/icons"
 import { api } from "@/lib/api-client"
+import type { UploadResponse } from "@/types/api"
 
 interface CoverImageUploadProps {
   value?: string[]
@@ -33,7 +34,7 @@ export function CoverImageUpload({
       const formData = new FormData()
       formData.append("file", file)
       try {
-        const data = await api<{ imageUrl: string }>("/api/upload", {
+        const data = await api<UploadResponse>("/api/upload", {
           method: "POST",
           body: formData,
         })

@@ -17,7 +17,7 @@ FileUpload 每次选择文件时，`ADD_FILES` reducer 无条件调用一次 `on
 **触发:** 用户选 3 张图 → 6 次上传请求 → 3 张孤立图片残留服务器。
 
 **修复建议:**  
-- [ ] 将 `value={[]}` 改为 `value={undefined}` 退出 controlled 模式，或使用 `useMemo(() => [], [])` 稳定引用。
+- [x] 将 `value={[]}` 改为 `value={undefined}` 退出 controlled 模式，或使用 `useMemo(() => [], [])` 稳定引用。
 
 ---
 
@@ -43,7 +43,7 @@ FileUpload 每次选择文件时，`ADD_FILES` reducer 无条件调用一次 `on
 **触发:** 用户可无限上传图片绕过 maxFiles=9 限制。
 
 **修复建议:**  
-- [ ] 将 `value={[]}` 改为 `value={undefined}`，退出 FileUpload 的 controlled 模式。
+- [x] 将 `value={[]}` 改为 `value={undefined}`，退出 FileUpload 的 controlled 模式。
 
 ---
 
