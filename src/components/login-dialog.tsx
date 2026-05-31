@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, type FormEvent } from "react"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { CloseIcon } from "@/components/icons"
 import { useUserStore } from "@/stores/user-store"
@@ -54,7 +54,7 @@ export function LoginDialog({ open, onOpenChange }: Props) {
     }
   }
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     if (!phone || !code) return
     setLoading(true)

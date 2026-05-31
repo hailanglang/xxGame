@@ -12,12 +12,12 @@ import {
   FileUploadTrigger,
 } from "@/components/ui/file-upload";
 import { Upload, X } from "lucide-react";
-import * as React from "react";
+import { useState, useCallback } from "react";
 
 export function FileUploadDemo() {
-  const [files, setFiles] = React.useState<File[]>([]);
+  const [files, setFiles] = useState<File[]>([]);
 
-  const onFileReject = React.useCallback((file: File, message: string) => {
+  const onFileReject = useCallback((file: File, message: string) => {
 
     // toast(message, {
     //   description: `"${

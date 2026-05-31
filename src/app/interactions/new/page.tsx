@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, type FormEvent } from "react"
 import { useRouter } from "next/navigation"
 import { CloseIcon, ChevronDownIcon } from "@/components/icons"
 import { CoverImageUpload } from "@/components/cover-image-upload"
@@ -23,7 +23,7 @@ export default function NewInteractionPage() {
   const [coverFiles, setCoverFiles] = useState<File[]>([])
   const [loading, setLoading] = useState(false)
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     if (!title || !content) return
     setLoading(true)

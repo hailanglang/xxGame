@@ -14,6 +14,7 @@ XXGame — 类似"小黑盒"的游戏社区中心。三个平台：PC端 (Next.j
   - `npx tsx script.ts` → `pnpm dlx tsx script.ts`
 - 包管理工具为 pnpm，禁止使用 npm / yarn。
 - **图标 SVG 必须提取**: 页面绘制完成后，所有 inline `<svg>` 必须提取到 `src/components/icons.tsx`，封装为可复用组件（`stroke="currentColor"`，通过 `className` 控制颜色）。
+- **React 按需引用**: 禁止 `import * as React from "react"`，统一使用命名导入 `import { useState, useEffect } from "react"`。
 
 ## Commands
 

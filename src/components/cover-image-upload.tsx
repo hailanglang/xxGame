@@ -1,6 +1,6 @@
 "use client"
 
-import * as React from "react"
+import { useState, useEffect } from "react"
 import {
   FileUpload,
   FileUploadDropzone,
@@ -19,13 +19,13 @@ export function CoverImageUpload({
   onValueChange,
   maxFiles = 9,
 }: CoverImageUploadProps) {
-  const [files, setFiles] = React.useState<File[]>(value ?? [])
-  const [previews, setPreviews] = React.useState<string[]>([])
+  const [files, setFiles] = useState<File[]>(value ?? [])
+  const [previews, setPreviews] = useState<string[]>([])
 
   const isControlled = value !== undefined
   const currentFiles = isControlled ? value : files
 
-  React.useEffect(() => {
+  useEffect(() => {
     const urls = currentFiles.map((f) => URL.createObjectURL(f))
     setPreviews(urls)
     return () => urls.forEach((u) => URL.revokeObjectURL(u))
