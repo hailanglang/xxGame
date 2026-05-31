@@ -20,7 +20,7 @@ interface CoverImageUploadProps {
 export function CoverImageUpload({
   value,
   onValueChange,
-  maxFiles = 9,
+  maxFiles = 3,
 }: CoverImageUploadProps) {
   const [urls, setUrls] = useState<string[]>(value ?? [])
   const [uploading, setUploading] = useState(false)
@@ -30,7 +30,6 @@ export function CoverImageUpload({
   async function handleFilesChange(newFiles: File[]) {
     setUploading(true)
     const newUrls: string[] = []
-    console.log('newFiles', newFiles)
     for (const file of newFiles) {
       const formData = new FormData()
       formData.append("file", file)
@@ -63,7 +62,7 @@ export function CoverImageUpload({
       maxFiles={maxFiles}
       maxSize={5 * 1024 * 1024}
       accept="image/*"
-      onValueChange={handleFilesChange}
+      onAccept={handleFilesChange}
       multiple={maxFiles > 1}
     >
       <div className="flex gap-2 flex-wrap">
@@ -73,13 +72,13 @@ export function CoverImageUpload({
             className="relative size-24 shrink-0 rounded-[10px] overflow-hidden bg-[#101828]"
           >
             <img src={url} alt="" className="size-full object-cover" />
-            <button
+            {/* <button
               type="button"
               onClick={() => removeUrl(index)}
               className="absolute top-1 right-1 size-5 flex items-center justify-center rounded bg-black/60 hover:bg-black/80 text-white transition-colors"
             >
               <XSmallIcon />
-            </button>
+            </button> */}
           </div>
         ))}
 
