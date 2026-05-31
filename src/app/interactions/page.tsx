@@ -5,6 +5,7 @@ import Link from "next/link"
 import { WorkspaceIcon, EyeIcon, HeartIcon, CommentIcon } from "@/components/icons"
 import { api } from "@/lib/api-client"
 import type { PostItem, PostsResponse } from "@/types/api"
+import { toast } from "sonner"
 
 const categoryTabs = [
   { label: "话题分享", active: true },

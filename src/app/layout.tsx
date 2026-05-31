@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import { type ReactNode } from "react"
 import { NavBar } from "@/components/nav-bar"
+import { ToastProvider } from "@/components/toast-provider"
 import "./globals.css"
 
 export const metadata: Metadata = {
@@ -21,6 +22,7 @@ export default function RootLayout({
       <body className="bg-[#F9FAFB] min-h-screen">
         <NavBar />
         {children}
+        <ToastProvider />
       </body>
     </html>
   )

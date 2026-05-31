@@ -6,6 +6,7 @@ import { CloseIcon } from "@/components/icons"
 import { useUserStore } from "@/stores/user-store"
 import { api } from "@/lib/api-client"
 import type { VerifyCodeResponse } from "@/types/api"
+import { toast } from "sonner"
 
 interface Props {
   open: boolean
@@ -42,10 +43,10 @@ export function LoginDialog({ open, onOpenChange }: Props) {
         await api("/api/sms/send-code", { method: "POST", body: { phone } })
         setCountdown(60)
       } catch (data: any) {
-        alert(data.error || "发送失败")
+        toast.error(data.error || "发送失败")
       }
     } catch {
-      alert("发送失败，请稍后再试")
+      toast.error("发送失败，请稍后再试")
     } finally {
       setSending(false)
     }
@@ -64,10 +65,10 @@ export function LoginDialog({ open, onOpenChange }: Props) {
         setAuth(data.token, data.user)
         onOpenChange(false)
       } catch (data: any) {
-        alert(data.error || "登录失败")
+        toast.error(data.error || "登录失败")
       }
     } catch {
-      alert("登录失败，请稍后再试")
+      toast.error("登录失败，请稍后再试")
     } finally {
       setLoading(false)
     }

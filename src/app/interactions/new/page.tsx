@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { CloseIcon, ChevronDownIcon } from "@/components/icons"
 import { CoverImageUpload } from "@/components/cover-image-upload"
 import { api } from "@/lib/api-client"
+import { toast } from "sonner"
 
 const categories = [
   { value: "", label: "请选择分类" },
@@ -34,10 +35,10 @@ export default function NewInteractionPage() {
         })
         router.push("/interactions")
       } catch (data: any) {
-        alert(data.error || "发布失败")
+        toast.error(data.error || "发布失败")
       }
     } catch {
-      alert("发布失败，请稍后再试")
+      toast.error("发布失败，请稍后再试")
     } finally {
       setLoading(false)
     }
