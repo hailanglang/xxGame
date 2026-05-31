@@ -13,6 +13,23 @@ export interface UserInfo {
   role: string
 }
 
+// ---- GET /api/posts/[id] ----
+
+export interface PostDetail {
+  id: string
+  title: string
+  content: string
+  summary: string | null
+  author: Pick<UserInfo, "id" | "nickname"> & { avatarUrl: string | null }
+  workspace: { id: string; name: string; slug: string } | null
+  images: string[]
+  viewCount: number
+  likeCount: number
+  commentCount: number
+  publishedAt: string
+  createdAt: string
+}
+
 // ---- GET /api/posts ----
 
 interface Author {
