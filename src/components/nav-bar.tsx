@@ -25,6 +25,7 @@ export function NavBar() {
   const clearAuth = useUserStore((s) => s.clearAuth)
   const isLoggedIn = mounted && !!(token && user)
 
+  // server component 渲染模式下，是现在服务端执行
   useEffect(() => { setMounted(true) }, [])
 
   useEffect(() => {
