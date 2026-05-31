@@ -10,6 +10,13 @@ export const metadata: Metadata = {
     template: "%s | XXGame",
   },
   description: "发现好玩家，游戏有伴，拒绝凑数。XXGame 是一个游戏玩家社区平台。",
+  keywords: ["游戏社区", "游戏玩家", "找游戏搭子", "AI陪玩", "斗地主", "飞行棋", "XXGame", "游戏社交"],
+  robots: { index: true, follow: true },
+  openGraph: {
+    type: "website",
+    locale: "zh_CN",
+    siteName: "XXGame",
+  },
 }
 
 export default function RootLayout({
