@@ -1,16 +1,11 @@
+import { UserInfo } from "@/types/api"
 import { create } from "zustand"
 
-interface User {
-  id: string
-  phone: string
-  nickname: string
-  role: string
-}
 
 interface UserState {
   token: string | null
-  user: User | null
-  setAuth: (token: string, user: User) => void
+  user: UserInfo | null
+  setAuth: (token: string, user: UserInfo) => void
   clearAuth: () => void
 }
 
