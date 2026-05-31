@@ -6,6 +6,7 @@ import { WorkspaceIcon, EyeIcon, HeartIcon, CommentIcon } from "@/components/ico
 import { api } from "@/lib/api-client"
 import type { PostItem, PostsResponse } from "@/types/api"
 import { toast } from "sonner"
+import { Skeleton } from "@/components/ui/skeleton"
 
 const categoryTabs = [
   { label: "话题分享", active: true },
@@ -14,15 +15,34 @@ const categoryTabs = [
   { label: "器材讨论", active: false },
 ]
 
+function PostSkeleton() {
+  return (
+    <article className="bg-white border border-[#E5E7EB] rounded-[10px] p-6">
+      <div className="grid grid-cols-3 gap-2">
+        {[0, 1, 2].map((i) => (
+          <Skeleton key={i} className="h-[119px] rounded-[10px]" />
+        ))}
+      </div>
+      <Skeleton className="mt-4 h-7 w-4/5" />
+      <Skeleton className="mt-2 h-6 w-full" />
+      <Skeleton className="mt-4 h-5 w-1/3" />
+    </article>
+  )
+}
+
 export default function InteractionsPage() {
   const [posts, setPosts] = useState<PostItem[]>([])
   const [nextCursor, setNextCursor] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    api<PostsResponse>("/api/posts?limit=20").then((data) => {
-      setPosts(data.items)
-      setNextCursor(data.nextCursor)
-    })
+    api<PostsResponse>("/api/posts?limit=20")
+      .then((data) => {
+        setPosts(data.items)
+        setNextCursor(data.nextCursor)
+      })
+      .catch(() => toast.error("加载失败，请稍后再试"))
+      .finally(() => setLoading(false))
   }, [])
 
   return (
@@ -62,7 +82,13 @@ export default function InteractionsPage() {
         {/* 中间文章列表 — Figma: 699.33px                                    */}
         {/* ================================================================ */}
         <main className="flex-1 max-w-[699.33px]">
-          {posts.length === 0 ? (
+          {loading ? (
+            <div className="space-y-6">
+              {[0, 1, 2].map((i) => (
+                <PostSkeleton key={i} />
+              ))}
+            </div>
+          ) : posts.length === 0 ? (
             <p className="text-center text-[#4A5565] py-20">
               还没有内容，快来发布第一篇互动帖吧
             </p>
