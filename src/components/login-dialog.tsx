@@ -63,6 +63,7 @@ export function LoginDialog({ open, onOpenChange }: Props) {
           body: { phone, code },
         })
         setAuth(data.token, data.user)
+        toast.success("登录成功")
         onOpenChange(false)
       } catch (data: any) {
         toast.error(data.error || "登录失败")

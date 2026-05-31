@@ -2,7 +2,7 @@
 
 import { useState, type FormEvent } from "react"
 import { useRouter } from "next/navigation"
-import { CloseIcon, ChevronDownIcon } from "@/components/icons"
+import { ChevronDownIcon } from "@/components/icons"
 import { CoverImageUpload } from "@/components/cover-image-upload"
 import { api } from "@/lib/api-client"
 import { toast } from "sonner"
@@ -33,6 +33,7 @@ export default function NewInteractionPage() {
           method: "POST",
           body: { title, content, category, images: coverUrls },
         })
+        toast.success("发布成功")
         router.push("/interactions")
       } catch (data: any) {
         toast.error(data.error || "发布失败")
@@ -57,14 +58,7 @@ export default function NewInteractionPage() {
             <h1 className="text-xl font-semibold text-[#101828] leading-7">
               发布内容
             </h1>
-            <button
-              type="button"
-              onClick={() => router.back()}
-              className="text-[#99A1AF] hover:text-[#364153] transition-colors"
-              aria-label="关闭"
-            >
-              <CloseIcon className="size-15" />
-            </button>
+
           </div>
 
           {/* 封面 — Figma: 水平布局, label 80px + 上传区, pt-5 */}

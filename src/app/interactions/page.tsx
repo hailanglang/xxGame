@@ -74,7 +74,7 @@ export default function InteractionsPage() {
             href="/interactions/new"
             className="mt-3 block w-full h-10 bg-[#FB2C36] hover:bg-[#e0262f] text-white text-base font-medium rounded-[10px] transition-colors flex items-center justify-center"
           >
-            发布
+            发布内容
           </Link>
         </aside>
 
