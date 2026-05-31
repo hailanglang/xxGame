@@ -51,6 +51,19 @@ export interface PostItem {
   publishedAt: Date
 }
 
+export interface PostRow {
+  id: string
+  title: string
+  summary: string | null
+  author: { id: string; nickname: string | null; avatarUrl: string | null }
+  workspace: { id: string; name: string; slug: string } | null
+  images: { imageUrl: string }[]
+  viewCount: number
+  likeCount: number
+  commentCount: number
+  publishedAt: Date
+}
+
 export interface PostsResponse {
   items: PostItem[]
   nextCursor: string | null

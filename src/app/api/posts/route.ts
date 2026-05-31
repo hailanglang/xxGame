@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma"
 import { NextRequest } from "next/server"
 import { getUserFromHeaders } from "@/lib/auth"
-import type { PostsResponse, CreatePostResponse, ApiError } from "@/types/api"
+import type { PostsResponse, CreatePostResponse, ApiError, PostRow } from "@/types/api"
 
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl
@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
     const items = hasMore ? posts.slice(0, limit) : posts
 
     const body: PostsResponse = {
-      items: items.map((p) => ({
+      items: items.map((p: PostRow) => ({
         id: p.id,
         title: p.title,
         summary: p.summary,
