@@ -4,7 +4,7 @@ import { useState, type FormEvent } from "react"
 import { useRouter } from "next/navigation"
 import { CloseIcon, ChevronDownIcon } from "@/components/icons"
 import { CoverImageUpload } from "@/components/cover-image-upload"
-import { useUserStore } from "@/stores/user-store"
+import { api } from "@/lib/api-client"
 
 const categories = [
   { value: "", label: "请选择分类" },
@@ -16,11 +16,10 @@ const categories = [
 
 export default function NewInteractionPage() {
   const router = useRouter()
-  const token = useUserStore((s) => s.token)
   const [category, setCategory] = useState("")
   const [title, setTitle] = useState("")
   const [content, setContent] = useState("")
-  const [coverFiles, setCoverFiles] = useState<File[]>([])
+  const [coverUrls, setCoverUrls] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
 
   async function handleSubmit(e: FormEvent) {
@@ -28,33 +27,13 @@ export default function NewInteractionPage() {
     if (!title || !content) return
     setLoading(true)
     try {
-      // 1. 逐张上传图片
-      const imageUrls: string[] = []
-      for (const file of coverFiles) {
-        const formData = new FormData()
-        formData.append("file", file)
-        const res = await fetch("/api/upload", {
+      try {
+        await api("/api/posts", {
           method: "POST",
-          headers: { "Authorization": `Bearer ${token}` },
-          body: formData,
+          body: { title, content, category, images: coverUrls },
         })
-        const data = await res.json()
-        if (res.ok) imageUrls.push(data.imageUrl)
-      }
-
-      // 2. 创建文章
-      const res = await fetch("/api/posts", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
-        },
-        body: JSON.stringify({ title, content, category, images: imageUrls }),
-      })
-      if (res.ok) {
         router.push("/interactions")
-      } else {
-        const data = await res.json()
+      } catch (data: any) {
         alert(data.error || "发布失败")
       }
     } catch {
@@ -83,7 +62,7 @@ export default function NewInteractionPage() {
               className="text-[#99A1AF] hover:text-[#364153] transition-colors"
               aria-label="关闭"
             >
-              <CloseIcon className="size-5" />
+              <CloseIcon className="size-15" />
             </button>
           </div>
 
@@ -94,8 +73,7 @@ export default function NewInteractionPage() {
             </span>
             <div className="flex-1">
               <CoverImageUpload
-                value={coverFiles}
-                onValueChange={setCoverFiles}
+                onValueChange={setCoverUrls}
               />
             </div>
           </div>

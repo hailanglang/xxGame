@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { WorkspaceIcon, EyeIcon, HeartIcon, CommentIcon } from "@/components/icons"
+import { api } from "@/lib/api-client"
 
 const categoryTabs = [
   { label: "话题分享", active: true },
@@ -29,12 +30,10 @@ export default function InteractionsPage() {
   const [nextCursor, setNextCursor] = useState<string | null>(null)
 
   useEffect(() => {
-    fetch("/api/posts?limit=20")
-      .then((res) => res.json())
-      .then((data) => {
-        setPosts(data.items)
-        setNextCursor(data.nextCursor)
-      })
+    api("/api/posts?limit=20").then((data: any) => {
+      setPosts(data.items)
+      setNextCursor(data.nextCursor)
+    })
   }, [])
 
   return (
