@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { CloseIcon, ChevronDownIcon } from "@/components/icons"
 import { CoverImageUpload } from "@/components/cover-image-upload"
+import { useUserStore } from "@/stores/user-store"
 
 const categories = [
   { value: "", label: "请选择分类" },
@@ -15,6 +16,7 @@ const categories = [
 
 export default function NewInteractionPage() {
   const router = useRouter()
+  const token = useUserStore((s) => s.token)
   const [category, setCategory] = useState("")
   const [title, setTitle] = useState("")
   const [content, setContent] = useState("")
@@ -25,9 +27,41 @@ export default function NewInteractionPage() {
     e.preventDefault()
     if (!title || !content) return
     setLoading(true)
-    // TODO: 接入 API
-    await new Promise((r) => setTimeout(r, 800))
-    setLoading(false)
+    try {
+      // 1. 逐张上传图片
+      const imageUrls: string[] = []
+      for (const file of coverFiles) {
+        const formData = new FormData()
+        formData.append("file", file)
+        const res = await fetch("/api/upload", {
+          method: "POST",
+          headers: { "Authorization": `Bearer ${token}` },
+          body: formData,
+        })
+        const data = await res.json()
+        if (res.ok) imageUrls.push(data.imageUrl)
+      }
+
+      // 2. 创建文章
+      const res = await fetch("/api/posts", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify({ title, content, category, images: imageUrls }),
+      })
+      if (res.ok) {
+        router.push("/interactions")
+      } else {
+        const data = await res.json()
+        alert(data.error || "发布失败")
+      }
+    } catch {
+      alert("发布失败，请稍后再试")
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (

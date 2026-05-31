@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma"
 import { NextRequest } from "next/server"
+import { getUserFromHeaders } from "@/lib/auth"
 
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl
@@ -38,5 +39,43 @@ export async function GET(request: NextRequest) {
     })
   } catch (e) {
     return Response.json({ error: String(e) }, { status: 500 })
+  }
+}
+
+export async function POST(request: NextRequest) {
+  const user = await getUserFromHeaders(request)
+  if (!user) {
+    return Response.json({ error: "请先登录" }, { status: 401 })
+  }
+
+  try {
+    const { title, content, images } = await request.json()
+
+    if (!title || !content) {
+      return Response.json({ error: "标题和内容不能为空" }, { status: 400 })
+    }
+
+    const post = await prisma.post.create({
+      data: {
+        title,
+        content,
+        summary: content.slice(0, 200),
+        authorId: user.userId,
+        images: {
+          create: (images || []).map((url: string) => ({
+            imageUrl: url,
+          })),
+        },
+      },
+      include: {
+        images: true,
+        author: { select: { id: true, nickname: true } },
+      },
+    })
+
+    return Response.json(post)
+  } catch (e) {
+    console.error("create post error:", e)
+    return Response.json({ error: "发布失败" }, { status: 500 })
   }
 }
