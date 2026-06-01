@@ -12,27 +12,10 @@ import {
 import type { TileBoard, Direction } from "@/lib/game-2048"
 
 // ---- 常量 ----
-const BEST_KEY = "game-2048-best"
 const CELL = 100
 const GAP = 8
 const PAD = 12
 const BOARD_PX = CELL * 4 + GAP * 3 + PAD * 2 // 448px
-
-function getBest(): number {
-  try {
-    const v = localStorage.getItem(BEST_KEY)
-    return v ? Number(v) || 0 : 0
-  } catch {
-    return 0
-  }
-}
-function saveBest(v: number) {
-  try {
-    localStorage.setItem(BEST_KEY, String(v))
-  } catch {
-    /* noop */
-  }
-}
 
 // ---- tile 位置扁平列表 ----
 interface TilePos {
@@ -68,9 +51,8 @@ const CMAP: Record<number, { bg: string; fg: string }> = {
 
 // ---- 组件 ----
 export default function Game2048Page() {
-  const [board, setBoard] = useState<TileBoard>(createTileBoard)
+  const [board, setBoard] = useState<TileBoard | null>(null)
   const [score, setScore] = useState(0)
-  const [best, setBestScore] = useState(getBest)
   const [gameOver, setGameOver] = useState(false)
   const [won, setWon] = useState(false)
   const [keepPlaying, setKeepPlaying] = useState(false)
@@ -80,10 +62,12 @@ export default function Game2048Page() {
   const [spawnedId, setSpawnedId] = useState<number | null>(null)
 
   const ref = useRef(board)
+  const moveIdRef = useRef(0)
   ref.current = board
 
+  // 客户端初始化（避免 SSR/Client 随机数不一致导致 hydration 报错）
   useEffect(() => {
-    setBestScore(getBest())
+    setBoard(createTileBoard())
   }, [])
 
   const handleMove = useCallback(
@@ -95,36 +79,33 @@ export default function Game2048Page() {
       const result = moveTiles(cur, dir)
       if (!result.moved) return
 
-      // spawn 新 tile
-      const { board: withSpawn, id: sid } = spawnTile(result.board)
+      const thisMove = ++moveIdRef.current
 
-      // 合并动画标记
+      // Phase 1: 立即执行移动、更新分数、触发合并动画
+      const nextScore = score + result.score
+      setBoard(result.board)
+      setScore(nextScore)
       if (result.consumedIds.size > 0) {
         setConsumedIds(result.consumedIds)
         setTimeout(() => setConsumedIds(new Set()), 150)
       }
 
-      // 新 tile appear 动画
-      if (sid !== -1) {
-        setSpawnedId(sid)
-        setTimeout(() => setSpawnedId(null), 200)
-      }
-
-      const nextScore = score + result.score
-      setBoard(withSpawn)
-      setScore(nextScore)
-      if (nextScore > best) {
-        setBestScore(nextScore)
-        saveBest(nextScore)
-      }
-
-      if (!won && hasTileBoardWon(withSpawn)) setWon(true)
-
+      // Phase 2: 延迟 500ms 生成新 tile（等滑行动画播完后再出现）
       setTimeout(() => {
-        if (!canTilesMove(withSpawn)) setGameOver(true)
-      }, 0)
+        if (moveIdRef.current !== thisMove) return // 被后续移动覆盖，不再 spawn
+        const { board: withSpawn, id: sid } = spawnTile(result.board)
+        setBoard(withSpawn)
+        if (sid !== -1) {
+          setSpawnedId(sid)
+          setTimeout(() => setSpawnedId(null), 200)
+        }
+        if (!won && hasTileBoardWon(withSpawn)) setWon(true)
+        setTimeout(() => {
+          if (!canTilesMove(withSpawn)) setGameOver(true)
+        }, 0)
+      }, 500)
     },
-    [score, best, gameOver, won],
+    [score, gameOver, won],
   )
 
   useEffect(() => {
@@ -159,7 +140,20 @@ export default function Game2048Page() {
   const cont = () => setKeepPlaying(true)
   const showWin = won && !keepPlaying
 
-  const tiles = flat(board)
+  const tiles = board ? flat(board) : []
+
+  if (!board) {
+    return (
+      <div className="mx-auto max-w-[1280px] px-4 py-8">
+        <div className="mb-6 flex items-center justify-between">
+          <h1 style={{ color: "#101828", fontSize: 30, fontWeight: 700 }}>2048</h1>
+          <div className="rounded-md px-4 py-2 text-white" style={{ backgroundColor: "#BBADA0" }}>
+            得分: 0
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="mx-auto max-w-[1280px] px-4 py-8">
@@ -168,9 +162,6 @@ export default function Game2048Page() {
         <div className="flex gap-3">
           <div className="rounded-md px-4 py-2 text-white" style={{ backgroundColor: "#BBADA0" }}>
             得分: {score}
-          </div>
-          <div className="rounded-md px-4 py-2 text-white" style={{ backgroundColor: "#BBADA0" }}>
-            最高: {best}
           </div>
         </div>
       </div>
@@ -212,28 +203,34 @@ export default function Game2048Page() {
           return (
             <div
               key={t.id}
-              className="flex items-center justify-center font-bold"
+              className="absolute"
               style={{
-                position: "absolute",
                 width: CELL,
                 height: CELL,
                 left: PAD,
                 top: PAD,
                 transform: `translate(${(CELL + GAP) * t.col}px, ${(CELL + GAP) * t.row}px)`,
-                transition: "transform 100ms ease-in-out",
-                backgroundColor: c.bg,
-                color: c.fg,
-                fontSize: fs,
-                borderRadius: 6,
-                zIndex: isNew ? 2 : 1,
-                animation: isNew
-                  ? "tile-appear 200ms ease-out both"
-                  : isMerge
-                    ? "tile-pop 150ms ease-out both"
-                    : "none",
+                transition: "transform 300ms ease-in-out",
               }}
             >
-              {t.value}
+              <div
+                className="flex items-center justify-center font-bold"
+                style={{
+                  width: CELL,
+                  height: CELL,
+                  backgroundColor: c.bg,
+                  color: c.fg,
+                  fontSize: fs,
+                  borderRadius: 6,
+                  animation: isNew
+                    ? "tile-appear 200ms ease-out both"
+                    : isMerge
+                      ? "tile-pop 150ms ease-out both"
+                      : "none",
+                }}
+              >
+                {t.value}
+              </div>
             </div>
           )
         })}
