@@ -26,7 +26,7 @@ export const CodeInput = memo(function CodeInput({ phone, value, onChange }: Pro
     setSending(true)
     try {
       try {
-        // await api("/api/sms/send-code", { method: "POST", body: { phone } })
+        await api("/api/sms/send-code", { method: "POST", body: { phone } })
         setCountdown(60)
       } catch (data: any) {
         toast.error(data.error || "发送失败")

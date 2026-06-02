@@ -11,6 +11,7 @@ export interface UserInfo {
   phone: string
   nickname: string | null
   role: string
+  hasPassword: boolean
 }
 
 // ---- GET /api/posts/[id] ----
@@ -118,6 +119,17 @@ export interface PasswordLoginBody {
 }
 
 export type PasswordLoginResponse = VerifyCodeResponse
+
+// ---- PUT /api/auth/password ----
+
+export interface ChangePasswordBody {
+  oldPassword?: string
+  newPassword: string
+}
+
+export interface ChangePasswordResponse {
+  success: true
+}
 
 // ---- POST /api/upload ----
 

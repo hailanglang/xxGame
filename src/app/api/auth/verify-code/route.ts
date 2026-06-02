@@ -68,6 +68,7 @@ export async function POST(request: NextRequest) {
         phone: user.phone,
         nickname: user.nickname,
         role: user.role,
+        hasPassword: !!user.passwordHash,
       },
     }
     return Response.json(body)
