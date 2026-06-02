@@ -4,11 +4,6 @@ import { signJWT } from "@/lib/jwt"
 import bcrypt from "bcryptjs"
 import type { PasswordLoginResponse, ApiError } from "@/types/api"
 
-function generateNickname() {
-  const rand = Math.floor(Math.random() * 1e10).toString().padStart(10, "0")
-  return `用户_${rand}`
-}
-
 export async function POST(request: NextRequest) {
   try {
     const { phone, password } = await request.json()
@@ -33,13 +28,10 @@ export async function POST(request: NextRequest) {
         return Response.json({ error: "密码错误" } satisfies ApiError, { status: 401 })
       }
     } else {
-      user = await prisma.user.create({
-        data: {
-          phone,
-          passwordHash: await bcrypt.hash(password, 10),
-          nickname: generateNickname(),
-        },
-      })
+      return Response.json(
+        { error: "该手机号尚未注册，请选择验证码登录/注册" } satisfies ApiError,
+        { status: 404 },
+      )
     }
 
     if (user.status === "banned") {

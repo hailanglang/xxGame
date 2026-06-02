@@ -6,6 +6,9 @@ import { CloseIcon } from "@/components/icons"
 import { useUserStore } from "@/stores/user-store"
 import { api } from "@/lib/api-client"
 import type { VerifyCodeResponse } from "@/types/api"
+import { PhoneInput } from "@/components/login-dialog/phone-input"
+import { CodeInput } from "@/components/login-dialog/code-input"
+import { PasswordInput } from "@/components/login-dialog/password-input"
 import { toast } from "sonner"
 
 type LoginMode = "code" | "password"
@@ -21,7 +24,6 @@ export function LoginDialog({ open, onOpenChange }: Props) {
   const [phone, setPhone] = useState("")
   const [code, setCode] = useState("")
   const [password, setPassword] = useState("")
-  const [agreed, setAgreed] = useState(false)
   const [loading, setLoading] = useState(false)
   const [sending, setSending] = useState(false)
   const [countdown, setCountdown] = useState(0)
@@ -40,13 +42,13 @@ export function LoginDialog({ open, onOpenChange }: Props) {
       setPhone("")
       setCode("")
       setPassword("")
-      setAgreed(false)
       setCountdown(0)
       setLoading(false)
       setSending(false)
     }
   }, [open])
 
+  console.log('render here', )
   // 倒计时
   useEffect(() => {
     if (countdown <= 0) return
@@ -79,10 +81,6 @@ export function LoginDialog({ open, onOpenChange }: Props) {
       if (!code) return
     } else {
       if (!password) return
-      if (!agreed) {
-        toast.error("请先同意用户协议和隐私政策")
-        return
-      }
     }
 
     setLoading(true)
@@ -132,90 +130,43 @@ export function LoginDialog({ open, onOpenChange }: Props) {
 
         {/* 标签切换 — Figma: 验证码登录 | 密码登录，gap 32px，选中态底部有2px下划线 */}
         <div className="flex items-center gap-8 mb-8">
-          <button
-            type="button"
-            className="relative cursor-pointer"
-            onClick={() => setMode("code")}
-          >
-            <h2
-              className={`text-base leading-6 ${
-                isActive("code")
-                  ? "font-semibold text-[#101828]"
-                  : "font-medium text-[#99A1AF]"
-              }`}
+          {([["code", "验证码登录"], ["password", "密码登录"]] as const).map(([m, label]) => (
+            <button
+              key={m}
+              type="button"
+              className="relative cursor-pointer"
+              onClick={() => setMode(m)}
             >
-              验证码登录
-            </h2>
-            {isActive("code") && (
-              <div className="absolute bottom-[-4px] left-0 w-full h-0.5 bg-[#101828]" />
-            )}
-          </button>
-          <button
-            type="button"
-            className="relative cursor-pointer"
-            onClick={() => setMode("password")}
-          >
-            <h2
-              className={`text-base leading-6 ${
-                isActive("password")
-                  ? "font-semibold text-[#101828]"
-                  : "font-medium text-[#99A1AF]"
-              }`}
-            >
-              密码登录
-            </h2>
-            {isActive("password") && (
-              <div className="absolute bottom-[-4px] left-0 w-full h-0.5 bg-[#101828]" />
-            )}
-          </button>
+              <h2
+                className={`text-base leading-6 ${
+                  isActive(m)
+                    ? "font-semibold text-[#101828]"
+                    : "font-medium text-[#99A1AF]"
+                }`}
+              >
+                {label}
+              </h2>
+              {isActive(m) && (
+                <div className="absolute bottom-[-4px] left-0 w-full h-0.5 bg-[#101828]" />
+              )}
+            </button>
+          ))}
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* 手机号输入 */}
-          <input
-            ref={phoneRef}
-            type="tel"
-            maxLength={11}
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            placeholder="请输入手机号码"
-            className="w-full h-14 px-4 rounded-[10px] bg-[#F9FAFB] text-base text-[#101828] placeholder-[#99A1AF] outline-none"
-          />
+          <PhoneInput ref={phoneRef} value={phone} onChange={setPhone} />
 
           {mode === "code" ? (
-            <>
-              {/* 验证码行 */}
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  maxLength={6}
-                  value={code}
-                  onChange={(e) => setCode(e.target.value)}
-                  placeholder="请输入验证码"
-                  className="flex-1 h-14 px-4 rounded-[10px] bg-[#F9FAFB] text-base text-[#101828] placeholder-[#99A1AF] outline-none"
-                />
-                <button
-                  type="button"
-                  disabled={sending || countdown > 0 || !phone}
-                  onClick={sendCode}
-                  className="w-32 h-14 shrink-0 rounded-[10px] bg-[#E5E7EB] text-[#364153] text-base font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
-                >
-                  {countdown > 0 ? `${countdown}s` : "获取验证码"}
-                </button>
-              </div>
-
-            </>
+            <CodeInput
+              value={code}
+              onChange={setCode}
+              sending={sending}
+              countdown={countdown}
+              disabled={!phone}
+              onSend={sendCode}
+            />
           ) : (
-            <>
-              {/* 密码输入 — Figma: 400x56, bg #F9FAFB, radius 10px */}
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="请输入密码"
-                className="w-full h-14 px-4 rounded-[10px] bg-[#F9FAFB] text-base text-[#101828] placeholder-[#99A1AF] outline-none"
-              />
-            </>
+            <PasswordInput value={password} onChange={setPassword} />
           )}
 
           {/* 登录按钮 */}
@@ -229,12 +180,12 @@ export function LoginDialog({ open, onOpenChange }: Props) {
             className="w-full h-14 rounded-[10px] bg-[#1E2939] text-white text-base font-medium hover:bg-[#374151] disabled:opacity-50 disabled:cursor-not-allowed transition-colors mt-10 cursor-pointer"
           >
             {loading ? (
-              <span className="flex items-center justify-center gap-2">
+              <span className="flex  items-center justify-center gap-2">
                 <span className="size-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 处理中...
               </span>
             ) : (
-              "登录/注册"
+              <span className="text-xl">登录{mode == 'code' ? "/注册" : ''}</span>
             )}
           </button>
         </form>
