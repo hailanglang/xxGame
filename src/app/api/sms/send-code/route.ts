@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
     })
 
     // 发送短信（开发环境自动跳过）
-    await sendSmsCode(phone, code)
+    await sendSmsCode({ phone, code })
 
     return Response.json({ success: true } satisfies SendCodeResponse)
   } catch (e) {

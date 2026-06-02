@@ -1,25 +1,20 @@
-import Unisms from "unisms"
+import { sendByUnisms } from "@/lib/sms-unisms"
+import { sendByAliyun } from "@/lib/sms-aliyun"
 
-const isDev = process.env.NODE_ENV !== "production"
+type SmsProvider = "unisms" | "aliyun"
 
-const unisms = isDev
-  ? null
-  : new Unisms({
-      accessKeyId: process.env.UNISMS_ACCESS_KEY_ID!,
-      accessKeySecret: process.env.UNISMS_ACCESS_KEY_SECRET!,
-    })
+interface SendSmsCodeOptions {
+  phone: string
+  code?: string
+  provider?: SmsProvider
+}
 
-/** 发送短信验证码。开发环境跳过实际发送，仅打印日志。 */
-export async function sendSmsCode(phone: string, code: string) {
-  if (isDev) {
-    console.log(`[DEV] 验证码已生成: ${phone} -> ${code}`)
-    return
+export async function sendSmsCode(options: SendSmsCodeOptions): Promise<string> {
+  const { phone, code, provider = "unisms" } = options
+
+  if (provider === "aliyun") {
+    return sendByAliyun(phone)
   }
 
-  await unisms!.send({
-    to: phone,
-    signature: process.env.UNISMS_SIGNATURE!,
-    templateId: process.env.UNISMS_TEMPLATE_ID!,
-    templateData: { code },
-  })
+  return sendByUnisms(phone, code!)
 }
