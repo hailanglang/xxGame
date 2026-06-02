@@ -1,17 +1,10 @@
 import { NextRequest } from "next/server"
-import Unisms from "unisms"
 import { prisma } from "@/lib/prisma"
 import { DEV_CODE } from "@/lib/dev-code"
+import { sendSmsCode } from "@/lib/sms"
 import type { SendCodeResponse, ApiError } from "@/types/api"
 
 const isDev = process.env.NODE_ENV !== "production"
-
-const unisms = isDev
-  ? null
-  : new Unisms({
-      accessKeyId: process.env.UNISMS_ACCESS_KEY_ID!,
-      accessKeySecret: process.env.UNISMS_ACCESS_KEY_SECRET!,
-    })
 
 export async function POST(request: NextRequest) {
   try {
@@ -42,18 +35,8 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    // 开发环境跳过短信发送
-    if (isDev) {
-      return Response.json({ success: true } satisfies SendCodeResponse)
-    }
-
-    // 生产环境发送短信
-    await unisms!.send({
-      to: phone,
-      signature: process.env.UNISMS_SIGNATURE!,
-      templateId: process.env.UNISMS_TEMPLATE_ID!,
-      templateData: { code },
-    })
+    // 发送短信（开发环境自动跳过）
+    await sendSmsCode(phone, code)
 
     return Response.json({ success: true } satisfies SendCodeResponse)
   } catch (e) {
