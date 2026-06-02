@@ -1,13 +1,13 @@
 "use client"
 
-import { forwardRef } from "react"
+import { forwardRef, memo } from "react"
 
 interface Props {
   value: string
   onChange: (value: string) => void
 }
 
-export const PhoneInput = forwardRef<HTMLInputElement, Props>(
+export const PhoneInput = memo(forwardRef<HTMLInputElement, Props>(
   function PhoneInput({ value, onChange }, ref) {
     return (
       <input
@@ -21,4 +21,4 @@ export const PhoneInput = forwardRef<HTMLInputElement, Props>(
       />
     )
   },
-)
+))

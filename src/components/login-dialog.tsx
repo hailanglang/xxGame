@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useRef, useEffect, type FormEvent } from "react"
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
+import { useState, useRef, useEffect, memo, type FormEvent } from "react"
+import { Dialog, DialogContent,DialogDescription, DialogTitle } from "@/components/ui/dialog"
 import { CloseIcon } from "@/components/icons"
 import { useUserStore } from "@/stores/user-store"
 import { api } from "@/lib/api-client"
@@ -25,8 +25,6 @@ export function LoginDialog({ open, onOpenChange }: Props) {
   const [code, setCode] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
-  const [sending, setSending] = useState(false)
-  const [countdown, setCountdown] = useState(0)
   const phoneRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -34,7 +32,6 @@ export function LoginDialog({ open, onOpenChange }: Props) {
       setTimeout(() => phoneRef.current?.focus(), 150)
     }
   }, [open])
-
   // 重置状态
   useEffect(() => {
     if (!open) {
@@ -42,36 +39,9 @@ export function LoginDialog({ open, onOpenChange }: Props) {
       setPhone("")
       setCode("")
       setPassword("")
-      setCountdown(0)
       setLoading(false)
-      setSending(false)
     }
   }, [open])
-
-  console.log('render here', )
-  // 倒计时
-  useEffect(() => {
-    if (countdown <= 0) return
-    const timer = setTimeout(() => setCountdown(countdown - 1), 1000)
-    return () => clearTimeout(timer)
-  }, [countdown])
-
-  async function sendCode() {
-    if (!phone || !/^1\d{10}$/.test(phone)) return
-    setSending(true)
-    try {
-      try {
-        await api("/api/sms/send-code", { method: "POST", body: { phone } })
-        setCountdown(60)
-      } catch (data: any) {
-        toast.error(data.error || "发送失败")
-      }
-    } catch {
-      toast.error("发送失败，请稍后再试")
-    } finally {
-      setSending(false)
-    }
-  }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -118,7 +88,8 @@ export function LoginDialog({ open, onOpenChange }: Props) {
         showCloseButton={false}
       >
         <DialogTitle className="sr-only">登录 / 注册</DialogTitle>
-
+<DialogDescription>
+            </DialogDescription>
         {/* 关闭按钮 */}
         <button
           onClick={() => onOpenChange(false)}
@@ -157,14 +128,7 @@ export function LoginDialog({ open, onOpenChange }: Props) {
           <PhoneInput ref={phoneRef} value={phone} onChange={setPhone} />
 
           {mode === "code" ? (
-            <CodeInput
-              value={code}
-              onChange={setCode}
-              sending={sending}
-              countdown={countdown}
-              disabled={!phone}
-              onSend={sendCode}
-            />
+            <CodeInput phone={phone} value={code} onChange={setCode} />
           ) : (
             <PasswordInput value={password} onChange={setPassword} />
           )}
