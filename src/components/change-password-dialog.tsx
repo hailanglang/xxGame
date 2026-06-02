@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, type FormEvent } from "react"
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
+import { useState, useRef, useEffect, type FormEvent } from "react"
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { CloseIcon } from "@/components/icons"
 import { api } from "@/lib/api-client"
 import { toast } from "sonner"
@@ -17,13 +17,23 @@ export function ChangePasswordDialog({ open, onOpenChange, hasPassword }: Props)
   const [newPassword, setNewPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [loading, setLoading] = useState(false)
+  const firstInputRef = useRef<HTMLInputElement>(null)
 
-  function reset() {
-    setOldPassword("")
-    setNewPassword("")
-    setConfirmPassword("")
-    setLoading(false)
-  }
+  useEffect(() => {
+    if (open) {
+      setTimeout(() => firstInputRef.current?.focus(), 150)
+    }
+  }, [open])
+
+  // 重置状态
+  useEffect(() => {
+    if (!open) {
+      setOldPassword("")
+      setNewPassword("")
+      setConfirmPassword("")
+      setLoading(false)
+    }
+  }, [open])
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -53,16 +63,19 @@ export function ChangePasswordDialog({ open, onOpenChange, hasPassword }: Props)
   }
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { reset(); onOpenChange(v) }}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         className="sm:max-w-[448px] gap-0 p-6 rounded-2xl bg-white shadow-[0_8px_10px_-6px_rgba(0,0,0,0.1),0_20px_25px_-5px_rgba(0,0,0,0.1)] border-0 ring-0"
         showCloseButton={false}
       >
         <DialogTitle className="sr-only">修改密码</DialogTitle>
+        <DialogDescription className="sr-only">
+          修改XXGame账号的登录密码
+        </DialogDescription>
 
         {/* 关闭按钮 */}
         <button
-          onClick={() => { reset(); onOpenChange(false) }}
+          onClick={() => onOpenChange(false)}
           className="absolute top-4 right-4 flex items-center justify-center text-[#101828] hover:text-[#364153] transition-colors cursor-pointer"
           aria-label="关闭"
         >
@@ -86,10 +99,12 @@ export function ChangePasswordDialog({ open, onOpenChange, hasPassword }: Props)
                 原密码
               </label>
               <input
+                ref={firstInputRef}
                 type="password"
                 value={oldPassword}
                 onChange={(e) => setOldPassword(e.target.value)}
                 placeholder="请输入原密码"
+                autoComplete="off"
                 className="w-full h-[49px] px-4 rounded-[10px] bg-[#F9FAFB] border border-[#E5E7EB] text-base text-[#101828] placeholder-[rgba(10,10,10,0.5)] outline-none"
               />
             </div>
@@ -100,10 +115,12 @@ export function ChangePasswordDialog({ open, onOpenChange, hasPassword }: Props)
               新密码
             </label>
             <input
+              ref={hasPassword ? undefined : firstInputRef}
               type="password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               placeholder="请输入新密码（至少6位）"
+              autoComplete="off"
               className="w-full h-[49px] px-4 rounded-[10px] bg-[#F9FAFB] border border-[#E5E7EB] text-base text-[#101828] placeholder-[rgba(10,10,10,0.5)] outline-none"
             />
           </div>
@@ -117,6 +134,7 @@ export function ChangePasswordDialog({ open, onOpenChange, hasPassword }: Props)
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder="请再次输入新密码"
+              autoComplete="off"
               className="w-full h-[49px] px-4 rounded-[10px] bg-[#F9FAFB] border border-[#E5E7EB] text-base text-[#101828] placeholder-[rgba(10,10,10,0.5)] outline-none"
             />
           </div>
@@ -125,7 +143,7 @@ export function ChangePasswordDialog({ open, onOpenChange, hasPassword }: Props)
           <div className="flex gap-3 pt-6">
             <button
               type="button"
-              onClick={() => { reset(); onOpenChange(false) }}
+              onClick={() => onOpenChange(false)}
               className="flex-1 h-[48px] rounded-[10px] bg-[#F3F4F6] text-[#364153] text-base font-medium hover:bg-[#E5E7EB] transition-colors cursor-pointer"
             >
               取消

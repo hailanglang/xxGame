@@ -88,8 +88,9 @@ export function LoginDialog({ open, onOpenChange }: Props) {
         showCloseButton={false}
       >
         <DialogTitle className="sr-only">登录 / 注册</DialogTitle>
-<DialogDescription>
-            </DialogDescription>
+        <DialogDescription className="sr-only">
+          通过手机号验证码或密码登录XXGame账号
+        </DialogDescription>
         {/* 关闭按钮 */}
         <button
           onClick={() => onOpenChange(false)}
@@ -101,7 +102,7 @@ export function LoginDialog({ open, onOpenChange }: Props) {
 
         {/* 标签切换 — Figma: 验证码登录 | 密码登录，gap 32px，选中态底部有2px下划线 */}
         <div className="flex items-center gap-8 mb-8">
-          {([["code", "验证码登录"], ["password", "密码登录"]] as const).map(([m, label]) => (
+          {([["password", "密码登录"],["code", "验证码登录"]] as const).map(([m, label]) => (
             <button
               key={m}
               type="button"
