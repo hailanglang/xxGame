@@ -110,6 +110,15 @@ export interface SendCodeResponse {
   success: true
 }
 
+// ---- POST /api/auth/password-login ----
+
+export interface PasswordLoginBody {
+  phone: string
+  password: string
+}
+
+export type PasswordLoginResponse = VerifyCodeResponse
+
 // ---- POST /api/upload ----
 
 export interface UploadResponse {

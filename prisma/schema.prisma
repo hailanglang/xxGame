@@ -30,6 +30,7 @@ model User {
   phone       String   @unique @db.VarChar(20)
   nickname    String?  @db.VarChar(50)
   avatarUrl   String?  @map("avatar_url") @db.Text
+  passwordHash String?  @map("password_hash") @db.Text        // bcrypt hash, NULL = 仅验证码登录
   role        String   @default("user") @db.VarChar(10)    // "user" | "moderator"
   status      String   @default("active") @db.VarChar(10)  // "active" | "banned"
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz()
