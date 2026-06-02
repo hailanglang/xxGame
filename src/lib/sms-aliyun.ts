@@ -32,5 +32,5 @@ export async function sendByAliyun(phone: string): Promise<string> {
 
   const runtime = new $Util.RuntimeOptions({})
   const result = await getClient().sendSmsVerifyCodeWithOptions(request, runtime)
-  return result.body.returnVerifyCode!
+  return result.body!.returnVerifyCode!
 }
