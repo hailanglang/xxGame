@@ -1,4 +1,4 @@
-import { sendByUnisms } from "@/lib/sms-unisms"
+// import { sendByUnisms } from "@/lib/sms-unisms"
 import { sendByAliyun } from "@/lib/sms-aliyun"
 
 type SmsProvider = "unisms" | "aliyun"
@@ -10,11 +10,9 @@ interface SendSmsCodeOptions {
 }
 
 export async function sendSmsCode(options: SendSmsCodeOptions): Promise<string> {
-  const { phone, code, provider = "unisms" } = options
+  const { phone, code, provider = "aliyun" } = options
 
-  if (provider === "aliyun") {
-    return sendByAliyun(phone)
-  }
+  return sendByAliyun(phone)
 
-  return sendByUnisms(phone, code!)
+  // return sendByUnisms(phone, code!)
 }

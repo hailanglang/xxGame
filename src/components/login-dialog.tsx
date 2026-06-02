@@ -128,7 +128,8 @@ export function LoginDialog({ open, onOpenChange }: Props) {
               onClick={sendCode} */}
             <button
               type="button"
-              disabled
+              disabled={sending || countdown > 0 || !phone}
+              onClick={sendCode} 
               className="w-32 h-14 shrink-0 rounded-[10px] bg-[#E5E7EB] text-[#364153] text-base font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               获取验证码

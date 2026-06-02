@@ -18,19 +18,21 @@ function getClient(): Dypnsapi20170525 {
 }
 
 export async function sendByAliyun(phone: string): Promise<string> {
-  if (isDev) {
-    const code = "123456"
-    console.log(`[DEV] 验证码已生成: ${phone} -> ${code}`)
-    return code
-  }
-
   const request = new $Dypnsapi20170525.SendSmsVerifyCodeRequest({
+    schemeName: "xxGame",
+    signName: "速通互联验证码",
+    templateCode: "100001",
+    templateParam: "{\"code\":\"##code##\",\"min\":\"5\"}",
+    returnVerifyCode: true,
     phoneNumber: phone,
-    signName: process.env.ALIBABA_CLOUD_SMS_SIGN_NAME!,
-    templateCode: process.env.ALIBABA_CLOUD_SMS_TEMPLATE_CODE!,
+    codeLength: 6
   })
 
   const runtime = new $Util.RuntimeOptions({})
   const result = await getClient().sendSmsVerifyCodeWithOptions(request, runtime)
-  return result.body!.returnVerifyCode!
+  if(result.body && result.body?.code == 'OK' && result.body.model){
+      return result.body.model.verifyCode!
+  }else{
+    throw Error(JSON.stringify(result))
+  }
 }
