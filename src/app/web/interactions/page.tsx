@@ -54,7 +54,7 @@ export default function InteractionsPage() {
         {/* 左侧导航 — Figma: 182.67px, padding 16px                          */}
         {/* ================================================================ */}
         <aside className="w-[182.67px] shrink-0">
-          <nav className="bg-white border border-[#E5E7EB] rounded-[10px] p-4 space-y-2">
+          {/* <nav className="bg-white border border-[#E5E7EB] rounded-[10px] p-4 space-y-2">
             {categoryTabs.map((tab) => (
               <button
                 key={tab.label}
@@ -69,7 +69,7 @@ export default function InteractionsPage() {
                 {tab.label}
               </button>
             ))}
-          </nav>
+          </nav> */}
 
           {/* 发布按钮 — 与 nav-bar 登录按钮相同样式 */}
           <button
