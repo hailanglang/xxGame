@@ -10,6 +10,7 @@ import {
   resetTileIds,
 } from "@/lib/game-2048"
 import type { TileBoard, Direction } from "@/lib/game-2048"
+import GameAiPanel from "@/components/game-2048-ai-panel"
 
 // ---- 常量 ----
 const CELL = 100
@@ -103,7 +104,7 @@ export default function Game2048Page() {
         setTimeout(() => {
           if (!canTilesMove(withSpawn)) setGameOver(true)
         }, 0)
-      }, 500)
+      }, 300)
     },
     [score, gameOver, won],
   )
@@ -170,104 +171,110 @@ export default function Game2048Page() {
         使用方向键移动数字方块，合并相同数字，挑战 2048！
       </p>
 
-      {/* 棋盘 */}
-      <div
-        className="relative"
-        style={{ width: BOARD_PX, height: BOARD_PX, backgroundColor: "#BBADA0", borderRadius: 8 }}
-      >
-        {/* 空槽背景 */}
+      {/* 棋盘 + AI 面板左右并排 */}
+      <div className="flex items-start gap-6">
+        {/* 棋盘 */}
         <div
-          className="absolute"
-          style={{
-            inset: PAD,
-            display: "grid",
-            gap: GAP,
-            gridTemplateColumns: `repeat(4, ${CELL}px)`,
-          }}
+          className="relative"
+          style={{ width: BOARD_PX, height: BOARD_PX, backgroundColor: "#BBADA0", borderRadius: 8 }}
         >
-          {Array.from({ length: 16 }).map((_, i) => (
-            <div
-              key={i}
-              style={{ width: CELL, height: CELL, backgroundColor: "#CDC1B4", borderRadius: 6 }}
-            />
-          ))}
-        </div>
-
-        {/* 前景 tile（绝对定位 + CSS transition 滑行） */}
-        {tiles.map((t) => {
-          const c = CMAP[t.value] ?? { bg: "#3C3A32", fg: "#F9F6F2" }
-          const fs = t.value <= 64 ? "36px" : t.value <= 2048 ? "28px" : "24px"
-          const isMerge = consumedIds.has(t.id)
-          const isNew = t.id === spawnedId
-
-          return (
-            <div
-              key={t.id}
-              className="absolute"
-              style={{
-                width: CELL,
-                height: CELL,
-                left: PAD,
-                top: PAD,
-                transform: `translate(${(CELL + GAP) * t.col}px, ${(CELL + GAP) * t.row}px)`,
-                transition: "transform 300ms ease-in-out",
-              }}
-            >
+          {/* 空槽背景 */}
+          <div
+            className="absolute"
+            style={{
+              inset: PAD,
+              display: "grid",
+              gap: GAP,
+              gridTemplateColumns: `repeat(4, ${CELL}px)`,
+            }}
+          >
+            {Array.from({ length: 16 }).map((_, i) => (
               <div
-                className="flex items-center justify-center font-bold"
+                key={i}
+                style={{ width: CELL, height: CELL, backgroundColor: "#CDC1B4", borderRadius: 6 }}
+              />
+            ))}
+          </div>
+
+          {/* 前景 tile（绝对定位 + CSS transition 滑行） */}
+          {tiles.map((t) => {
+            const c = CMAP[t.value] ?? { bg: "#3C3A32", fg: "#F9F6F2" }
+            const fs = t.value <= 64 ? "36px" : t.value <= 2048 ? "28px" : "24px"
+            const isMerge = consumedIds.has(t.id)
+            const isNew = t.id === spawnedId
+
+            return (
+              <div
+                key={t.id}
+                className="absolute"
                 style={{
                   width: CELL,
                   height: CELL,
-                  backgroundColor: c.bg,
-                  color: c.fg,
-                  fontSize: fs,
-                  borderRadius: 6,
-                  animation: isNew
-                    ? "tile-appear 200ms ease-out both"
-                    : isMerge
-                      ? "tile-pop 150ms ease-out both"
-                      : "none",
+                  left: PAD,
+                  top: PAD,
+                  transform: `translate(${(CELL + GAP) * t.col}px, ${(CELL + GAP) * t.row}px)`,
+                  transition: "transform 300ms ease-in-out",
                 }}
               >
-                {t.value}
+                <div
+                  className="flex items-center justify-center font-bold"
+                  style={{
+                    width: CELL,
+                    height: CELL,
+                    backgroundColor: c.bg,
+                    color: c.fg,
+                    fontSize: fs,
+                    borderRadius: 6,
+                    animation: isNew
+                      ? "tile-appear 200ms ease-out both"
+                      : isMerge
+                        ? "tile-pop 150ms ease-out both"
+                        : "none",
+                  }}
+                >
+                  {t.value}
+                </div>
               </div>
+            )
+          })}
+
+          {/* Game Over */}
+          {gameOver && !showWin && (
+            <div
+              className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/50"
+              style={{ borderRadius: 8 }}
+            >
+              <p className="mb-4 text-3xl font-bold text-white">游戏结束</p>
+              <button
+                onClick={restart}
+                className="rounded-md px-6 py-2 text-lg font-semibold text-white"
+                style={{ backgroundColor: "#FB2C36" }}
+              >
+                再来一局
+              </button>
             </div>
-          )
-        })}
+          )}
 
-        {/* Game Over */}
-        {gameOver && !showWin && (
-          <div
-            className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/50"
-            style={{ borderRadius: 8 }}
-          >
-            <p className="mb-4 text-3xl font-bold text-white">游戏结束</p>
-            <button
-              onClick={restart}
-              className="rounded-md px-6 py-2 text-lg font-semibold text-white"
-              style={{ backgroundColor: "#FB2C36" }}
+          {/* Win */}
+          {showWin && (
+            <div
+              className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/30"
+              style={{ borderRadius: 8 }}
             >
-              再来一局
-            </button>
-          </div>
-        )}
+              <p className="mb-4 text-3xl font-bold text-white">你赢了！</p>
+              <button
+                onClick={cont}
+                className="rounded-md px-6 py-2 text-lg font-semibold text-white"
+                style={{ backgroundColor: "#FB2C36" }}
+              >
+                继续
+              </button>
+            </div>
+          )}
+        </div>
 
-        {/* Win */}
-        {showWin && (
-          <div
-            className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/30"
-            style={{ borderRadius: 8 }}
-          >
-            <p className="mb-4 text-3xl font-bold text-white">你赢了！</p>
-            <button
-              onClick={cont}
-              className="rounded-md px-6 py-2 text-lg font-semibold text-white"
-              style={{ backgroundColor: "#FB2C36" }}
-            >
-              继续
-            </button>
-          </div>
-        )}
+        {/* AI 面板 */}
+        <GameAiPanel board={board} score={score} />
       </div>
 
       <div className="mt-6">
