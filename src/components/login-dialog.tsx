@@ -20,7 +20,7 @@ interface Props {
 
 export function LoginDialog({ open, onOpenChange }: Props) {
   const setAuth = useUserStore((s) => s.setAuth)
-  const [mode, setMode] = useState<LoginMode>("code")
+  const [mode, setMode] = useState<LoginMode>("password")
   const [phone, setPhone] = useState("")
   const [code, setCode] = useState("")
   const [password, setPassword] = useState("")
@@ -35,7 +35,7 @@ export function LoginDialog({ open, onOpenChange }: Props) {
   // 重置状态
   useEffect(() => {
     if (!open) {
-      setMode("code")
+      setMode("password")
       setPhone("")
       setCode("")
       setPassword("")
