@@ -33,7 +33,7 @@ export default function HomePage() {
     <>
       <main className="max-w-[1280px] mx-auto px-8 py-20">
         {/* Slogan — Figma: 60px Bold, centered */}
-        <h1 className="text-center text-[60px] font-bold text-[#101828] leading-[60px]">
+        <h1 className="text-center mt-20 mb-40 text-[60px] font-bold text-[#101828] leading-[60px]">
           一个人，也能玩得很热闹
         </h1>
 

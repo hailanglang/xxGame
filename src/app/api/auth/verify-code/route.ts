@@ -1,7 +1,6 @@
 import { NextRequest } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { signJWT } from "@/lib/jwt"
-import { DEV_CODE } from "@/lib/dev-code"
 import type { VerifyCodeResponse, ApiError } from "@/types/api"
 
 
@@ -20,29 +19,28 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: "参数错误" } satisfies ApiError, { status: 400 })
     }
 
-    if (code !== DEV_CODE) {
-      const record = await prisma.verificationCode.findFirst({
-        where: {
-          phone,
-          used: false,
-          expiresAt: { gte: new Date() },
-        },
-        orderBy: { createdAt: "desc" },
-      })
+    const record = await prisma.verificationCode.findFirst({
+      where: {
+        phone,
+        used: false,
+        expiresAt: { gte: new Date() },
+      },
+      orderBy: { createdAt: "desc" },
+    })
 
-      if (!record) {
-        return Response.json({ error: "请先获取验证码" } satisfies ApiError, { status: 401 })
-      }
-
-      if (record.code !== code) {
-        return Response.json({ error: "验证码错误" } satisfies ApiError, { status: 401 })
-      }
-
-      await prisma.verificationCode.update({
-        where: { id: record.id },
-        data: { used: true },
-      })
+    if (!record) {
+      return Response.json({ error: "请先获取验证码" } satisfies ApiError, { status: 401 })
     }
+
+    if (record.code !== code) {
+      return Response.json({ error: "验证码错误" } satisfies ApiError, { status: 401 })
+    }
+
+    await prisma.verificationCode.update({
+      where: { id: record.id },
+      data: { used: true },
+    })
+
 
     const user = await prisma.user.upsert({
       where: { phone },
@@ -70,6 +68,7 @@ export async function POST(request: NextRequest) {
         phone: user.phone,
         nickname: user.nickname,
         role: user.role,
+        hasPassword: !!user.passwordHash,
       },
     }
     return Response.json(body)
