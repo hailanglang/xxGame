@@ -3,27 +3,24 @@
 import { useState, useCallback, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { moveTiles } from "@/lib/game-2048"
 import type { TileBoard, Direction } from "@/lib/game-2048"
-
-// ---- 常量 ----
-const DEEPSEEK_URL = "https://api.deepseek.com/v1/chat/completions"
-const DEEPSEEK_MODEL = "deepseek-chat"
-const LOCAL_KEY = "2048_deepseek_api_key"
-const LOCAL_AUTO = "2048_ai_auto_mode"
-const BOARD_PX = 448 // 与 page.tsx 中棋盘高度一致
-
-// ---- 类型 ----
-interface AiMessage {
-  boardSnapshot: number[][]
-  direction: Direction
-  reason: string
-  timestamp: number
-}
-
-interface DeepSeekResponse {
-  direction: Direction
-  reason: string
-}
+import { extractTokenUsage, addUsage, type TokenUsage } from "@/lib/deepseek-usage"
+import TokenUsagePanel from "@/components/token-usage-panel"
+import {
+  DEEPSEEK_URL,
+  DEEPSEEK_MODEL,
+  LOCAL_KEY,
+  LOCAL_AUTO,
+  BOARD_PX,
+  DIR_ARROW,
+  MINI_CMAP,
+  serializeBoard,
+  buildUserMessage,
+  SYSTEM_PROMPT,
+  type AiMessage,
+  type DeepSeekResponse,
+} from "@/lib/deepseek-prompt"
 
 interface GameAiPanelProps {
   board: TileBoard | null
@@ -37,6 +34,8 @@ export default function GameAiPanel({ board, score }: GameAiPanelProps) {
   const [messages, setMessages] = useState<AiMessage[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [lastUsage, setLastUsage] = useState<TokenUsage | null>(null)
+  const [totalUsage, setTotalUsage] = useState<TokenUsage>({ prompt: 0, cached: 0, miss: 0, completion: 0, total: 0, cost: 0 })
 
   // ---- ref ----
   const abortRef = useRef<AbortController | null>(null)
@@ -66,50 +65,30 @@ export default function GameAiPanel({ board, score }: GameAiPanelProps) {
     try { localStorage.setItem(LOCAL_AUTO, String(next)) } catch { /* 静默降级 */ }
   }, [autoMode])
 
-  // ---- 棋盘序列化 ----
-  function serializeBoard(b: TileBoard): number[][] {
-    return b.map((row) =>
-      row.map((t) => (t ? t.value : 0))
-    )
-  }
-
-  // ---- prompt 构建 ----
-  function buildPrompt(b: TileBoard, s: number): string {
-    const grid = serializeBoard(b)
-      .map((row) => `[${row.join(",")}]`)
-      .join("\n")
-
-    return `你是一个 2048 游戏 AI 助手，请分析当前棋局并给出最佳移动方向。
-只回复 JSON 格式，不要任何其他文字：
-{"direction": "up|down|left|right", "reason": "中文理由，一句话"}
-
-当前棋盘（4×4，0=空格）：
-${grid}
-
-当前分数: ${s}`
-  }
-
   // ---- DeepSeek API 调用 ----
-  async function fetchSuggestion(b: TileBoard, s: number): Promise<DeepSeekResponse> {
+  async function fetchSuggestion(b: TileBoard, s: number, valid: Direction[]): Promise<{ suggestion: DeepSeekResponse; usage: TokenUsage }> {
     const controller = new AbortController()
     abortRef.current = controller
 
+    const body = JSON.stringify({
+        model: DEEPSEEK_MODEL,
+        messages: [
+          { role: "system", content: SYSTEM_PROMPT },
+          { role: "user", content: buildUserMessage(b, s, valid) },
+        ],
+        temperature: 0.3,
+        max_tokens: 128,
+      })
     const res = await fetch(DEEPSEEK_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${apiKey}`,
       },
-      body: JSON.stringify({
-        model: DEEPSEEK_MODEL,
-        messages: [
-          { role: "user", content: buildPrompt(b, s) },
-        ],
-        temperature: 0.3,
-        max_tokens: 128,
-      }),
+      body,
       signal: controller.signal,
     })
+
 
     if (!res.ok) {
       if (res.status === 401) throw new Error("API Key 无效，请检查")
@@ -119,18 +98,19 @@ ${grid}
 
     const data = await res.json()
     const content = data.choices?.[0]?.message?.content?.trim()
-    if (!content) throw new Error("AI 返回为空，请重试")
 
+    console.log('data', JSON.stringify(data,null,4))
+    console.log('body', JSON.stringify(body,null,4))
+    if (!content) throw new Error("AI 返回为空，请重试")
     const jsonMatch = content.match(/\{[\s\S]*\}/)
     if (!jsonMatch) throw new Error("AI 返回格式异常，请重试")
 
     const parsed = JSON.parse(jsonMatch[0]) as DeepSeekResponse
-    const validDirs: Direction[] = ["up", "down", "left", "right"]
-    if (!validDirs.includes(parsed.direction)) {
+    if (!valid.includes(parsed.direction)) {
       throw new Error("AI 返回了无效方向，请重试")
     }
 
-    return parsed
+    return { suggestion: parsed, usage: extractTokenUsage(data) }
   }
 
   // ---- 获取建议 ----
@@ -148,14 +128,25 @@ ${grid}
 
     try {
       const snapshot = serializeBoard(board)
-      const result = await fetchSuggestion(board, score)
+      const validDirs = (["up", "down", "left", "right"] as Direction[]).filter(
+        (d) => moveTiles(board, d).moved,
+      )
+      if (validDirs.length === 0) {
+        setError("当前局面无合法移动")
+        setLoading(false)
+        return
+      }
+      const { suggestion, usage } = await fetchSuggestion(board, score, validDirs)
 
       if (callIdRef.current !== thisCall) return // 被后续调用覆盖
 
+      setLastUsage(usage)
+      setTotalUsage((prev) => addUsage(prev, usage))
+
       const msg: AiMessage = {
         boardSnapshot: snapshot,
-        direction: result.direction,
-        reason: result.reason,
+        direction: suggestion.direction,
+        reason: suggestion.reason,
         timestamp: Date.now(),
       }
       setMessages((prev) => [...prev, msg])
@@ -191,29 +182,6 @@ ${grid}
     }
   }, [board, autoMode, getSuggestion])
 
-  // ---- 方向箭头映射 ----
-  const DIR_ARROW: Record<Direction, string> = {
-    up: "↑ (向上)",
-    down: "↓ (向下)",
-    left: "← (向左)",
-    right: "→ (向右)",
-  }
-
-  // ---- 迷你棋盘格子颜色 ----
-  const MINI_CMAP: Record<number, string> = {
-    2: "#EEE4DA",
-    4: "#EDE0C8",
-    8: "#F2B179",
-    16: "#F59563",
-    32: "#F67C5F",
-    64: "#F65E3B",
-    128: "#EDCF72",
-    256: "#EDCC61",
-    512: "#EDC850",
-    1024: "#EDC53F",
-    2048: "#EDC22E",
-  }
-
   /** 渲染 4×4 迷你棋盘 */
   function MiniBoard({ grid }: { grid: number[][] }) {
     return (
@@ -238,7 +206,7 @@ ${grid}
 
   return (
     <div
-      className="flex w-[300px] shrink-0 flex-col gap-4 rounded-lg border bg-white p-4"
+      className="flex w-[600px] shrink-0 flex-col gap-4 rounded-lg border bg-white p-4"
       style={{ minHeight: BOARD_PX }}
     >
       {/* ---- API Key 输入 ---- */}
@@ -324,6 +292,8 @@ ${grid}
           </div>
         </div>
       )}
+
+      <TokenUsagePanel lastUsage={lastUsage} totalUsage={totalUsage} />
     </div>
   )
 }

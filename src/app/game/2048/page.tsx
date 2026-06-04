@@ -82,29 +82,30 @@ export default function Game2048Page() {
 
       const thisMove = ++moveIdRef.current
 
-      // Phase 1: 立即执行移动、更新分数、触发合并动画
+      // 立即生成 new tile 数据（不等滑行结束）
+      const { board: withSpawn, id: sid } = spawnTile(result.board)
       const nextScore = score + result.score
-      setBoard(result.board)
+      setBoard(withSpawn)
       setScore(nextScore)
       if (result.consumedIds.size > 0) {
         setConsumedIds(result.consumedIds)
         setTimeout(() => setConsumedIds(new Set()), 150)
       }
 
-      // Phase 2: 延迟 500ms 生成新 tile（等滑行动画播完后再出现）
-      setTimeout(() => {
-        if (moveIdRef.current !== thisMove) return // 被后续移动覆盖，不再 spawn
-        const { board: withSpawn, id: sid } = spawnTile(result.board)
-        setBoard(withSpawn)
-        if (sid !== -1) {
-          setSpawnedId(sid)
-          setTimeout(() => setSpawnedId(null), 200)
-        }
-        if (!won && hasTileBoardWon(withSpawn)) setWon(true)
+      // new tile 的 appear 动画由 CSS animation-delay: 300ms 延迟展示
+      if (sid !== -1) {
+        setSpawnedId(sid)
         setTimeout(() => {
-          if (!canTilesMove(withSpawn)) setGameOver(true)
-        }, 0)
-      }, 300)
+          if (moveIdRef.current !== thisMove) return
+          setSpawnedId(null)
+        }, 500) // 300ms 延迟 + 200ms 动画
+      }
+
+      // 立即检查胜负
+      if (!won && hasTileBoardWon(withSpawn)) setWon(true)
+      setTimeout(() => {
+        if (!canTilesMove(withSpawn)) setGameOver(true)
+      }, 0)
     },
     [score, gameOver, won],
   )
@@ -226,7 +227,7 @@ export default function Game2048Page() {
                     fontSize: fs,
                     borderRadius: 6,
                     animation: isNew
-                      ? "tile-appear 200ms ease-out both"
+                      ? "tile-appear 200ms ease-out 300ms both"
                       : isMerge
                         ? "tile-pop 150ms ease-out both"
                         : "none",
