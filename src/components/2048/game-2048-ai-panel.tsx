@@ -184,10 +184,10 @@ export default function GameAiPanel({ board, onMove }: GameAiPanelProps) {
 
   return (
     <div
-      className="flex w-[600px] shrink-0 flex-col gap-4 rounded-lg border bg-white p-4"
-      style={{ minHeight: BOARD_PX }}
+      className="flex shrink-0 flex-col gap-3 border bg-white"
+      style={{ width: 610, minHeight: BOARD_PX, borderRadius: 14, padding: 16, borderColor: "#E5E7EB" }}
     >
-            <TokenUsagePanel lastUsage={lastUsage} totalUsage={totalUsage} />
+      <TokenUsagePanel lastUsage={lastUsage} totalUsage={totalUsage} />
 
       {/* ---- API Key 输入 ---- */}
       <div className="flex flex-col gap-1.5">
@@ -206,12 +206,11 @@ export default function GameAiPanel({ board, onMove }: GameAiPanelProps) {
       {/* ---- AI 托管按钮 ---- */}
       <div className="flex items-center gap-2">
         <Button
-          variant='outline'
+          variant="outline"
           className="cursor-pointer"
           size="sm"
           onClick={toggleAutoMode}
           disabled={!apiKey.trim() || !board}
-          style={autoMode ? { backgroundColor: "#16A34A", color: "#fff" } : undefined}
         >
           {autoMode ? "关闭托管" : "AI 托管"}
         </Button>
@@ -225,7 +224,7 @@ export default function GameAiPanel({ board, onMove }: GameAiPanelProps) {
           {loading ? "分析中…" : "获取建议"}
         </Button>
       </div>
-      <div className="text-xs" style={{ color: "#6A7282" }}>
+      <div className="text-xs" style={{ color: "#99A1AF" }}>
         {autoMode ? "AI 正在自动下棋，无需手动操作" : "点击「AI 托管」让 AI 自动走棋"}
       </div>
 
@@ -239,7 +238,7 @@ export default function GameAiPanel({ board, onMove }: GameAiPanelProps) {
       {/* ---- AI 建议列表（倒序，最新的在最上面） ---- */}
       {messages.length > 0 && (
         <div className="flex flex-col gap-2">
-          <span className="text-xs font-semibold" style={{ color: "#101828" }}>
+          <span className="text-sm font-medium" style={{ color: "#364153" }}>
             历史步骤
           </span>
           <div className="flex max-h-[420px] flex-col gap-2 overflow-y-auto">
@@ -250,8 +249,8 @@ export default function GameAiPanel({ board, onMove }: GameAiPanelProps) {
                   key={msg.timestamp}
                   className="flex gap-3 rounded-md p-3"
                   style={ri === 0
-                    ? { backgroundColor: "#F0F7FF", border: "1px solid #BFDBFE" }
-                    : { backgroundColor: "#F9FAFB" }
+                    ? { backgroundColor: "#EFF6FF", border: "0.666px solid #DBEAFE", borderRadius: 10 }
+                    : { backgroundColor: "#FFFFFF", border: "0.666px solid #F3F4F6", borderRadius: 10 }
                   }
                 >
                   {/* 迷你棋盘 */}
@@ -260,13 +259,13 @@ export default function GameAiPanel({ board, onMove }: GameAiPanelProps) {
                   </div>
                   {/* 文字信息 */}
                   <div className="flex min-w-0 flex-col gap-0.5">
-                    <span className="text-[11px] font-medium" style={{ color: "#6A7282" }}>
+                    <span className="text-xs" style={{ color: "#99A1AF" }}>
                       第 {step} 步
                     </span>
-                    <span className="text-sm font-bold" style={{ color: "#101828" }}>
+                    <span className="text-sm font-medium" style={{ color: "#1E2939" }}>
                       {DIR_ARROW[msg.direction]}
                     </span>
-                    <span className="text-[11px]" style={{ color: "#6A7282" }}>
+                    <span className="text-xs" style={{ color: "#6A7282", lineHeight: "19.5px" }}>
                       {msg.reason}
                     </span>
                   </div>

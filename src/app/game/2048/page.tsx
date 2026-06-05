@@ -114,6 +114,7 @@ export default function Game2048Page() {
             得分: 0
           </div>
         </div>
+
       </div>
     )
   }
@@ -122,10 +123,19 @@ export default function Game2048Page() {
     <div className="mx-auto max-w-[1280px] px-4 py-8">
       <div className="mb-6 flex items-center justify-between">
         <h1 style={{ color: "#101828", fontSize: 30, fontWeight: 700 }}>2048</h1>
-        <div className="flex gap-3">
-          <div className="rounded-md px-4 py-2 text-white" style={{ backgroundColor: "#BBADA0" }}>
-            得分: {score}
+        <div className="flex">
+          <div className="flex gap-3">
+            <div className="rounded-md px-4 py-2 text-white" style={{ backgroundColor: "#BBADA0" }}>
+              得分: {score}
+            </div>
           </div>
+          <button
+            onClick={restart}
+            className="rounded-md ml-4 px-6 py-2 text-base font-semibold text-white"
+            style={{ backgroundColor: "#FB2C36" }}
+          >
+            重新开始
+          </button>
         </div>
       </div>
 
@@ -133,15 +143,6 @@ export default function Game2048Page() {
         使用方向键移动数字方块，合并相同数字，挑战 2048！
       </p>
 
-      <div className="mb-6">
-        <button
-          onClick={restart}
-          className="rounded-md px-6 py-2 text-base font-semibold text-white"
-          style={{ backgroundColor: "#FB2C36" }}
-        >
-          重新开始
-        </button>
-      </div>
       {/* 棋盘 + AI 面板左右并排 */}
       <div className="flex items-start gap-6">
         <GameBoard

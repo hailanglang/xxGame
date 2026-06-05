@@ -75,7 +75,7 @@ export const SYSTEM_PROMPT = `你是一位精通2048游戏的AI专家。你的�
 
 ### 输出格式
 只回复 JSON 格式，不要任何其他文字：
-{"direction": "up|down|left|right", "reason": "中文理由，一句话"}`
+{"direction": "up|down|left|right"}`
 
 // ---- 用户消息构建 ----
 export function buildUserMessage(b: TileBoard, valid: Direction[]): string {
