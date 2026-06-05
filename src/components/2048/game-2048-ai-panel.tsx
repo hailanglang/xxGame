@@ -5,13 +5,11 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { moveTiles } from "@/lib/game-2048"
 import type { TileBoard, Direction } from "@/lib/game-2048"
-import { extractTokenUsage, addUsage, type TokenUsage } from "@/lib/deepseek-usage"
+import { addUsage, type TokenUsage } from "@/lib/deepseek-usage"
 import TokenUsagePanel from "@/components/2048/token-usage-panel"
+import { dsApi } from "@/lib/api-client"
+import { useGameStore } from "@/stores/game-store"
 import {
-  DEEPSEEK_URL,
-  DEEPSEEK_MODEL,
-  LOCAL_KEY,
-  LOCAL_AUTO,
   BOARD_PX,
   DIR_ARROW,
   CMAP,
@@ -28,7 +26,7 @@ interface GameAiPanelProps {
 
 export default function GameAiPanel({ board, onMove }: GameAiPanelProps) {
   // ---- 状态 ----
-  const [apiKey, setApiKey] = useState("")
+  const apiKey = useGameStore((s) => s.apiKey)
   const [autoMode, setAutoMode] = useState(false)
   const [messages, setMessages] = useState<AiMessage[]>([])
   const [loading, setLoading] = useState(false)
@@ -41,76 +39,17 @@ export default function GameAiPanel({ board, onMove }: GameAiPanelProps) {
   const callIdRef = useRef(0)
   const autoModeRef = useRef(false)
 
-  // ---- 从 localStorage 恢复 ----
-  useEffect(() => {
-    try {
-      const savedKey = localStorage.getItem(LOCAL_KEY)
-      if (savedKey) setApiKey(savedKey)
-      const savedAuto = localStorage.getItem(LOCAL_AUTO)
-      if (savedAuto === "true") setAutoMode(true)
-    } catch { /* 静默降级 */ }
-  }, [])
-
   // ---- 保存到 localStorage ----
+  const setApiKey = useGameStore((s) => s.setApiKey)
   const handleApiKeyChange = useCallback((val: string) => {
     setApiKey(val)
-    try { localStorage.setItem(LOCAL_KEY, val) } catch { /* 静默降级 */ }
-  }, [])
+  }, [setApiKey])
 
   const toggleAutoMode = useCallback(() => {
     const next = !autoMode
     setAutoMode(next)
     autoModeRef.current = next
-    try { localStorage.setItem(LOCAL_AUTO, String(next)) } catch { /* 静默降级 */ }
   }, [autoMode])
-
-  // ---- DeepSeek API 调用 ----
-  async function fetchSuggestion(b: TileBoard, valid: Direction[]): Promise<{ suggestion: DeepSeekResponse; usage: TokenUsage }> {
-    const controller = new AbortController()
-    abortRef.current = controller
-
-    const body = JSON.stringify({
-        model: DEEPSEEK_MODEL,
-        messages: [
-          { role: "system", content: SYSTEM_PROMPT },
-          { role: "user", content: buildUserMessage(b, valid) },
-        ],
-        temperature: 0.3,
-        max_tokens: 128,
-      })
-    const res = await fetch(DEEPSEEK_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body,
-      signal: controller.signal,
-    })
-
-
-    if (!res.ok) {
-      if (res.status === 401) throw new Error("API Key 无效，请检查")
-      if (res.status === 429) throw new Error("请求过于频繁，请稍后重试")
-      throw new Error(`API 错误 (${res.status})`)
-    }
-
-    const data = await res.json()
-    const content = data.choices?.[0]?.message?.content?.trim()
-
-    console.log('data', JSON.stringify(data,null,4))
-    console.log('body', JSON.stringify(body,null,4))
-    if (!content) throw new Error("AI 返回为空，请重试")
-    const jsonMatch = content.match(/\{[\s\S]*\}/)
-    if (!jsonMatch) throw new Error("AI 返回格式异常，请重试")
-
-    const parsed = JSON.parse(jsonMatch[0]) as DeepSeekResponse
-    if (!valid.includes(parsed.direction)) {
-      throw new Error("AI 返回了无效方向，请重试")
-    }
-
-    return { suggestion: parsed, usage: extractTokenUsage(data) }
-  }
 
   // ---- 获取建议 ----
   const getSuggestion = useCallback(async () => {
@@ -160,21 +99,41 @@ export default function GameAiPanel({ board, onMove }: GameAiPanelProps) {
     }
   }, [board, apiKey, loading])
 
+  
+  // ---- DeepSeek API 调用 ----
+  async function fetchSuggestion(b: TileBoard, valid: Direction[]): Promise<{ suggestion: DeepSeekResponse; usage: TokenUsage }> {
+    const controller = new AbortController()
+    abortRef.current = controller
+
+    const { content, usage } = await dsApi(apiKey, [
+      { role: "system", content: SYSTEM_PROMPT },
+      { role: "user", content: buildUserMessage(b, valid) },
+    ], controller.signal)
+
+    const jsonMatch = content.match(/\{[\s\S]*\}/)
+    if (!jsonMatch) throw new Error("AI 返回格式异常，请重试")
+
+    const parsed = JSON.parse(jsonMatch[0]) as DeepSeekResponse
+    if (!valid.includes(parsed.direction)) {
+      throw new Error("AI 返回了无效方向，请重试")
+    }
+
+    return { suggestion: parsed, usage }
+  }
+
   // ---- AI 托管：当棋盘变化时自动走下一步 ----
   useEffect(() => {
     if (!autoMode || !board || !apiKey.trim()) return
-    if (loading) return
 
     abortRef.current?.abort()
+
+    const thisCall = ++callIdRef.current
 
     const timer = setTimeout(async () => {
       const validDirs = (["up", "down", "left", "right"] as Direction[]).filter(
         (d) => moveTiles(board, d).moved,
       )
       if (validDirs.length === 0) return
-
-      const thisCall = ++callIdRef.current
-      setLoading(true)
 
       try {
         const snapshot = serializeBoard(board)
@@ -187,14 +146,11 @@ export default function GameAiPanel({ board, onMove }: GameAiPanelProps) {
           ...prev,
           { boardSnapshot: snapshot, direction: suggestion.direction, reason: suggestion.reason, timestamp: Date.now() },
         ])
-        // 延迟确保 React 已提交本轮 state 更新后再执行移动
         await new Promise((r) => setTimeout(r, 0))
         onMove(suggestion.direction)
       } catch (e) {
         if (e instanceof DOMException && e.name === "AbortError") return
         if (callIdRef.current !== thisCall) return
-      } finally {
-        if (callIdRef.current === thisCall) setLoading(false)
       }
     }, 400) // 等滑行 + appear 动画播完
 
@@ -202,7 +158,7 @@ export default function GameAiPanel({ board, onMove }: GameAiPanelProps) {
       clearTimeout(timer)
       abortRef.current?.abort()
     }
-  }, [board, autoMode, apiKey, loading, onMove])
+  }, [board, autoMode, apiKey, onMove])
 
   /** 渲染 4×4 迷你棋盘 */
   function MiniBoard({ grid }: { grid: number[][] }) {
@@ -231,6 +187,8 @@ export default function GameAiPanel({ board, onMove }: GameAiPanelProps) {
       className="flex w-[600px] shrink-0 flex-col gap-4 rounded-lg border bg-white p-4"
       style={{ minHeight: BOARD_PX }}
     >
+            <TokenUsagePanel lastUsage={lastUsage} totalUsage={totalUsage} />
+
       {/* ---- API Key 输入 ---- */}
       <div className="flex flex-col gap-1.5">
         <label className="text-xs font-medium" style={{ color: "#6A7282" }}>
@@ -248,24 +206,24 @@ export default function GameAiPanel({ board, onMove }: GameAiPanelProps) {
       {/* ---- AI 托管按钮 ---- */}
       <div className="flex items-center gap-2">
         <Button
-          variant={autoMode ? "destructive" : "default"}
+          variant='outline'
+          className="cursor-pointer"
           size="sm"
           onClick={toggleAutoMode}
           disabled={!apiKey.trim() || !board}
           style={autoMode ? { backgroundColor: "#16A34A", color: "#fff" } : undefined}
         >
-          {autoMode ? (loading ? "托管中…" : "关闭托管") : "AI 托管"}
+          {autoMode ? "关闭托管" : "AI 托管"}
         </Button>
-        {!autoMode && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={getSuggestion}
-            disabled={!apiKey.trim() || !board || loading}
-          >
-            {loading ? "分析中…" : "获取建议"}
-          </Button>
-        )}
+        <Button
+          variant="outline"
+          className="cursor-pointer"
+          size="sm"
+          onClick={getSuggestion}
+          disabled={!apiKey.trim() || !board || loading || autoMode}
+        >
+          {loading ? "分析中…" : "获取建议"}
+        </Button>
       </div>
       <div className="text-xs" style={{ color: "#6A7282" }}>
         {autoMode ? "AI 正在自动下棋，无需手动操作" : "点击「AI 托管」让 AI 自动走棋"}
@@ -318,8 +276,6 @@ export default function GameAiPanel({ board, onMove }: GameAiPanelProps) {
           </div>
         </div>
       )}
-
-      <TokenUsagePanel lastUsage={lastUsage} totalUsage={totalUsage} />
     </div>
   )
 }
