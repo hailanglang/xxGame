@@ -1,23 +1,41 @@
 import type { TileBoard, Direction } from "@/lib/game-2048"
 
-// ---- 常量 ----
+// ---- 棋盘常量 ----
+export const CELL = 100
+export const GAP = 8
+export const PAD = 12
+export const BOARD_PX = CELL * 4 + GAP * 3 + PAD * 2 // 448px
+
+// ---- API 常量 ----
 export const DEEPSEEK_URL = "https://api.deepseek.com/v1/chat/completions"
 export const DEEPSEEK_MODEL = "deepseek-chat"
 export const LOCAL_KEY = "2048_deepseek_api_key"
 export const LOCAL_AUTO = "2048_ai_auto_mode"
-export const BOARD_PX = 448 // 与 page.tsx 中棋盘高度一致
 
-// ---- 类型 ----
-export interface AiMessage {
-  boardSnapshot: number[][]
-  direction: Direction
-  reason: string
-  timestamp: number
+// ---- tile 位置扁平化 ----
+export function flat(board: TileBoard) {
+  const out: { id: number; value: number; row: number; col: number }[] = []
+  for (let r = 0; r < 4; r++)
+    for (let c = 0; c < 4; c++) {
+      const t = board[r][c]
+      if (t) out.push({ id: t.id, value: t.value, row: r, col: c })
+    }
+  return out
 }
 
-export interface DeepSeekResponse {
-  direction: Direction
-  reason: string
+// ---- tile 颜色 ----
+export const CMAP: Record<number, { bg: string; fg: string }> = {
+  2: { bg: "#EEE4DA", fg: "#776E65" },
+  4: { bg: "#EDE0C8", fg: "#776E65" },
+  8: { bg: "#F2B179", fg: "#F9F6F2" },
+  16: { bg: "#F59563", fg: "#F9F6F2" },
+  32: { bg: "#F67C5F", fg: "#F9F6F2" },
+  64: { bg: "#F65E3B", fg: "#F9F6F2" },
+  128: { bg: "#EDCF72", fg: "#F9F6F2" },
+  256: { bg: "#EDCC61", fg: "#F9F6F2" },
+  512: { bg: "#EDC850", fg: "#F9F6F2" },
+  1024: { bg: "#EDC53F", fg: "#F9F6F2" },
+  2048: { bg: "#EDC22E", fg: "#F9F6F2" },
 }
 
 // ---- 方向箭头映射 ----
@@ -26,21 +44,6 @@ export const DIR_ARROW: Record<Direction, string> = {
   down: "↓ (向下)",
   left: "← (向左)",
   right: "→ (向右)",
-}
-
-// ---- 迷你棋盘格子颜色 ----
-export const MINI_CMAP: Record<number, string> = {
-  2: "#EEE4DA",
-  4: "#EDE0C8",
-  8: "#F2B179",
-  16: "#F59563",
-  32: "#F67C5F",
-  64: "#F65E3B",
-  128: "#EDCF72",
-  256: "#EDCC61",
-  512: "#EDC850",
-  1024: "#EDC53F",
-  2048: "#EDC22E",
 }
 
 // ---- 棋盘序列化 ----
@@ -75,11 +78,11 @@ export const SYSTEM_PROMPT = `你是一位精通2048游戏的AI专家。你的�
 {"direction": "up|down|left|right", "reason": "中文理由，一句话"}`
 
 // ---- 用户消息构建 ----
-export function buildUserMessage(b: TileBoard, s: number, valid: Direction[]): string {
+export function buildUserMessage(b: TileBoard, valid: Direction[]): string {
   const grid = serializeBoard(b)
     .map((row) => `[${row.join(",")}]`)
     .join("\n")
   const dirNames: Record<Direction, string> = { up: "上", down: "下", left: "左", right: "右" }
 
-  return `当前棋盘（4×4，0=空格）：\n${grid}\n当前分数: ${s}\n合法方向: ${valid.map((d) => dirNames[d]).join("、")}`
+  return `当前棋盘（4×4，0=空格）：\n${grid}\n合法方向: ${valid.map((d) => dirNames[d]).join("、")}`
 }
