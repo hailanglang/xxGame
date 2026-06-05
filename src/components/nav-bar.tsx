@@ -5,8 +5,9 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { LoginDialog } from "@/components/login-dialog"
+import { ChangePasswordDialog } from "@/components/change-password-dialog"
 import { useUserStore } from "@/stores/user-store"
-import { UserIcon, LogoutIcon } from "@/components/icons"
+import { UserIcon, LogoutIcon, LockIcon } from "@/components/icons"
 
 const links = [
   { href: "/", label: "首页" },
@@ -16,6 +17,7 @@ const links = [
 export function NavBar() {
   const pathname = usePathname()
   const [loginOpen, setLoginOpen] = useState(false)
+  const [changePasswordOpen, setChangePasswordOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
@@ -79,7 +81,17 @@ export function NavBar() {
 
               {/* 下拉菜单 — Figma: 12:22 */}
               {menuOpen && (
-                <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 w-36 bg-white border border-[#E5E7EB] rounded-[10px] shadow-[0_4px_6px_-4px_rgba(0,0,0,0.1),0_10px_15px_-3px_rgba(0,0,0,0.1)] py-2">
+                <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 w-44 bg-white border border-[#E5E7EB] rounded-[10px] shadow-[0_4px_6px_-4px_rgba(0,0,0,0.1),0_10px_15px_-3px_rgba(0,0,0,0.1)] py-2">
+                  <button
+                    onClick={() => {
+                      setChangePasswordOpen(true)
+                      setMenuOpen(false)
+                    }}
+                    className="flex items-center gap-2 w-full px-4 py-2 text-sm font-medium text-[#364153] hover:bg-[#F9FAFB] transition-colors cursor-pointer"
+                  >
+                    <LockIcon className="size-4 text-[#364153]" />
+                    修改密码
+                  </button>
                   <button
                     onClick={() => {
                       clearAuth()
@@ -105,6 +117,11 @@ export function NavBar() {
       </div>
 
       <LoginDialog open={loginOpen} onOpenChange={setLoginOpen} />
+      <ChangePasswordDialog
+        open={changePasswordOpen}
+        onOpenChange={setChangePasswordOpen}
+        hasPassword={user?.hasPassword ?? false}
+      />
     </nav>
   )
 }

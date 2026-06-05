@@ -1,17 +1,9 @@
 import { NextRequest } from "next/server"
-import Unisms from "unisms"
 import { prisma } from "@/lib/prisma"
-import { DEV_CODE } from "@/lib/dev-code"
+import { sendSmsCode } from "@/lib/sms"
 import type { SendCodeResponse, ApiError } from "@/types/api"
 
 const isDev = process.env.NODE_ENV !== "production"
-
-const unisms = isDev
-  ? null
-  : new Unisms({
-      accessKeyId: process.env.UNISMS_ACCESS_KEY_ID!,
-      accessKeySecret: process.env.UNISMS_ACCESS_KEY_SECRET!,
-    })
 
 export async function POST(request: NextRequest) {
   try {
@@ -30,8 +22,8 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: "验证码已发送，请60秒后再试" } satisfies ApiError, { status: 429 })
     }
 
-    // 开发环境固定验证码，生产环境随机生成
-    const code = isDev ? DEV_CODE : String(Math.floor(Math.random() * 900000 + 100000))
+    // 发送短信并获取验证码
+    const code = await sendSmsCode({ phone })
 
     // 存数据库
     await prisma.verificationCode.create({
@@ -40,19 +32,6 @@ export async function POST(request: NextRequest) {
         code,
         expiresAt: new Date(Date.now() + 5 * 60 * 1000),
       },
-    })
-
-    // 开发环境跳过短信发送
-    if (isDev) {
-      return Response.json({ success: true } satisfies SendCodeResponse)
-    }
-
-    // 生产环境发送短信
-    await unisms!.send({
-      to: phone,
-      signature: process.env.UNISMS_SIGNATURE!,
-      templateId: process.env.UNISMS_TEMPLATE_ID!,
-      templateData: { code },
     })
 
     return Response.json({ success: true } satisfies SendCodeResponse)
