@@ -17,6 +17,14 @@ XXGame — 类似"小黑盒"的游戏社区中心。三个平台：PC端 (Next.j
 - **React 按需引用**: 禁止 `import * as React from "react"`，统一使用命名导入 `import { useState, useEffect } from "react"`。
 - **API 类型共享**: 每次接口完成（route.ts）后，必须将请求/响应的 interface 添加到 `src/types/api.ts`。前端页面使用 `api<T>()` 导入对应类型，禁止在页面中重复定义。
 
+## Commit Convention
+
+```
+<type>: <简短的中文描述，一行写完>
+```
+
+type 取 `feat` / `fix` / `style` / `refactor` / `chore` / `docs`，不写 scope 和 body。
+
 ## Commands
 
 ```bash
