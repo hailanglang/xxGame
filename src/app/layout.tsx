@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import { type ReactNode } from "react"
 import { NavBar } from "@/components/nav-bar"
 import { ToastProvider } from "@/components/toast-provider"
+import { SpeedInsights } from "@vercel/speed-insights/next"
 import "./globals.css"
 
 export const metadata: Metadata = {
@@ -30,6 +31,7 @@ export default function RootLayout({
         <NavBar />
         {children}
         <ToastProvider />
+        <SpeedInsights/>
       </body>
     </html>
   )
