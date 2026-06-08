@@ -5,7 +5,7 @@
   "scripts": {
     "dev:turbo": "next dev",
     "dev": "next dev --webpack",
-    "build": "prisma generate && next build",
+    "build": "pnpm generate && next build",
     "start": "next start",
     "lint": "next lint",
     "studio": "pnpm dlx prisma studio --config ./prisma-game-database/prisma.config.ts --port 5555",
