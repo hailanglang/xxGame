@@ -7,7 +7,10 @@
     "dev": "next dev --webpack",
     "build": "prisma generate && next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "studio": "pnpm dlx prisma studio --config ./prisma-game-database/prisma.config.ts --port 5555",
+    "migrate:dev": "pnpm dlx prisma migrate dev --config ./prisma-game-database/prisma.config.ts",
+    "generate": "pnpm dlx prisma generate --config ./prisma-game-database/prisma.config.ts"
   },
   "dependencies": {
     "@alicloud/credentials": "^2.4.4",

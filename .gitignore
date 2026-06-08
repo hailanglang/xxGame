@@ -38,5 +38,5 @@ next-env.d.ts
 
 .vercel
 
-generated
+prisma-game-database/game-database-client-types
 
