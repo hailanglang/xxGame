@@ -1,4 +1,5 @@
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient } from '../../prisma-game-database/game-database-client-types/client'
+
 import { PrismaPg } from '@prisma/adapter-pg'
 import { Pool } from 'pg'
 
