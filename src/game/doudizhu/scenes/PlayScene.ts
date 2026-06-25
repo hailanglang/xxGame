@@ -1,10 +1,9 @@
 // src/game/doudizhu/scenes/PlayScene.ts
 import Phaser from "phaser"
 import type { GameState, Card, Combo, PlayerPosition } from "../logic/types"
-import { RANK_NAMES } from "../logic/types"
+import { RANK_NAMES, ComboType } from "../logic/types"
 import { recognizeCombo } from "../logic/rules"
 import { canBeat } from "../logic/compare"
-import { CardSprite } from "../ui/Card"
 import { HandFan } from "../ui/HandFan"
 import { PlayerAvatar } from "../ui/PlayerAvatar"
 import { Countdown } from "../ui/Countdown"
@@ -159,7 +158,12 @@ export class PlayScene extends Phaser.Scene {
       // 出最小的单张
       const minCard = this.gameState.hands[0][0]
       const combo = recognizeCombo([minCard])
-      if (combo) this.executePlay(0, [minCard], combo)
+      if (combo) {
+        this.executePlay(0, [minCard], combo)
+      } else {
+        // 降级：牌型识别失败时仍强制出牌，防止死锁
+        this.executePlay(0, [minCard], { type: ComboType.Single, mainRank: minCard.rank, length: 1, cards: [minCard] })
+      }
     } else {
       this.executePass(0)
     }
@@ -173,6 +177,7 @@ export class PlayScene extends Phaser.Scene {
 
     // 通过 DeepSeek API 获取决策
     const decision = await this.callAi(player)
+    if (!this.scene.isActive()) return  // 防止场景销毁后继续执行
 
     if (!decision || decision.action === "pass") {
       // AI 选择 pass
