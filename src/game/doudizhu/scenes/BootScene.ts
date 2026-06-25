@@ -6,13 +6,11 @@ export class BootScene extends Phaser.Scene {
   }
 
   preload() {
-    // 加载资源
+    // 尝试加载外部资源（文件可能不存在，会 404 但不影响运行）
     this.load.image("bg-table", "/game/doudizhu/bg-table.png")
-    this.load.atlas("cards", "/game/doudizhu/cards.png", "/game/doudizhu/cards.json")
     this.load.image("card-back", "/game/doudizhu/card-back.png")
-    this.load.image("avatar-frame", "/game/doudizhu/avatar.png")
 
-    // 音效
+    // 音效（暂无实际文件）
     this.load.audio("sfx-deal", "/game/doudizhu/sfx/deal.mp3")
     this.load.audio("sfx-play", "/game/doudizhu/sfx/play.mp3")
     this.load.audio("sfx-bomb", "/game/doudizhu/sfx/bomb.mp3")
@@ -32,6 +30,30 @@ export class BootScene extends Phaser.Scene {
   }
 
   create() {
+    // 生成占位纹理（外部资源加载失败时的 fallback）
+    this.generatePlaceholderTextures()
     this.scene.start("MenuScene")
+  }
+
+  /** 生成占位纹理，供外部资源缺失时使用 */
+  private generatePlaceholderTextures() {
+    // card-back: 深蓝色圆角矩形 + 白色边框
+    if (!this.textures.exists("card-back")) {
+      const g = this.add.graphics()
+      g.fillStyle(0x1565c0, 1)
+      g.fillRoundedRect(0, 0, 71, 96, 4)
+      g.lineStyle(2, 0x0d47a1, 1)
+      g.strokeRoundedRect(1, 1, 69, 94, 4)
+      g.generateTexture("card-back", 71, 96)
+      g.destroy()
+    }
+
+    // bg-table: 绿色 1x1 像素纹理（MenuScene 会 fallback 到背景色，但提供纹理更干净）
+    if (!this.textures.exists("bg-table")) {
+      const g = this.add.graphics()
+      g.fillStyle(0x1a6b3c, 1)
+      g.generateTexture("bg-table", 1, 1)
+      g.destroy()
+    }
   }
 }
