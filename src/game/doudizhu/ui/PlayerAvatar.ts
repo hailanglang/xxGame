@@ -1,6 +1,5 @@
 // src/game/doudizhu/ui/PlayerAvatar.ts
 import Phaser from "phaser"
-import { PlayerPosition } from "../logic/types"
 
 export class PlayerAvatar extends Phaser.GameObjects.Container {
   private nameText: Phaser.GameObjects.Text

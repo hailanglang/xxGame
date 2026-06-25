@@ -7,9 +7,11 @@ export class Countdown extends Phaser.GameObjects.Container {
   private remaining: number
   private _active = false
   private onTimeout: () => void
+  private barWidth: number
 
   constructor(scene: Phaser.Scene, x: number, y: number, width: number, onTimeout: () => void) {
     super(scene, x, y)
+    this.barWidth = width
     this.totalTime = 15
     this.remaining = 15
     this.onTimeout = onTimeout
@@ -46,6 +48,6 @@ export class Countdown extends Phaser.GameObjects.Container {
     const pct = Math.max(0, this.remaining / this.totalTime)
     const color = pct > 0.3 ? 0xd4a017 : 0xcc0000
     this.bar.fillStyle(color, 1)
-    this.bar.fillRoundedRect(0, 0, 200 * pct, 8, 4)
+    this.bar.fillRoundedRect(0, 0, this.barWidth * pct, 8, 4)
   }
 }
