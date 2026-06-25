@@ -13,9 +13,9 @@ export function createDeck(): Card[] {
       cards.push({ id: id++, suit, rank })
     }
   }
-  // 小王、大王
-  cards.push({ id: id++, suit: null, rank: 16 })
-  cards.push({ id: id++, suit: null, rank: 17 })
+  for (const rank of JOKER_RANKS) {
+    cards.push({ id: id++, suit: null, rank })
+  }
   return cards
 }
 
@@ -51,7 +51,7 @@ export function assignLandlord(
 ): GameState {
   const newHands: [Card[], Card[], Card[]] = [...state.hands]
   newHands[landlordPos] = [...newHands[landlordPos], ...state.dizhuCards]
-  return { ...state, landlord: landlordPos, hands: newHands }
+  return { ...state, landlord: landlordPos, hands: newHands, dizhuCards: [] }
 }
 
 /** 初始化游戏 */
