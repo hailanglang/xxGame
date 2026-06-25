@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import { moveTiles } from "@/lib/game-2048"
 import type { TileBoard, Direction } from "@/lib/game-2048"
 import { addUsage, type TokenUsage } from "@/lib/deepseek-usage"
-import TokenUsagePanel from "@/components/2048/token-usage-panel"
+import TokenUsagePanel from "@/components/token-usage-panel"
 import { dsApi } from "@/lib/api-client"
 import { useGameStore } from "@/stores/game-store"
 import {
