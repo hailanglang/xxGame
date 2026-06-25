@@ -54,6 +54,37 @@ export class CardSprite extends Phaser.GameObjects.Container {
     scene.add.existing(this)
   }
 
+  /** 翻转为牌面 (用于发牌动画后的底牌翻转) */
+  showFace() {
+    if (this.label) return // already face up
+    if (!this.back) return
+
+    // 移除牌背
+    this.back.destroy()
+    this.back = null
+
+    // 根据牌面信息创建文字
+    if (this.cardData.suit) {
+      const suitColor = this.cardData.suit === "h" || this.cardData.suit === "d" ? 0xcc0000 : 0x000000
+      const suitSymbol: Record<string, string> = { h: "♥", d: "♦", c: "♣", s: "♠" }
+      this.label = this.scene.add
+        .text(-CARD_WIDTH / 2 + 6, -CARD_HEIGHT / 2 + 4, `${RANK_NAMES[this.cardData.rank]}${suitSymbol[this.cardData.suit]}`, {
+          fontSize: "16px",
+          color: suitColor === 0xcc0000 ? "#cc0000" : "#000000",
+        })
+        .setOrigin(0, 0)
+      this.add(this.label)
+    } else {
+      this.label = this.scene.add
+        .text(0, 0, this.cardData.rank === 17 ? "大王" : "小王", {
+          fontSize: "14px",
+          color: this.cardData.rank === 17 ? "#cc0000" : "#000000",
+        })
+        .setOrigin(0.5)
+      this.add(this.label)
+    }
+  }
+
   toggleSelect() {
     this.isSelected = !this.isSelected
     this.y += this.isSelected ? -20 : 20
