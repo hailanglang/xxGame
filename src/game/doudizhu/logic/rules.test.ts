@@ -1,12 +1,12 @@
 // src/game/doudizhu/logic/rules.test.ts
 import { describe, it, expect } from "vitest"
 import { recognizeCombo } from "./rules"
-import { ComboType, type Card, type Rank, type Combo } from "./types"
+import { ComboType, Suit, type Card, type Rank, type Combo } from "./types"
 
 function card(rank: Rank, offset = 0): Card {
   // suit 不影响识别，只用 rank
   const suitMap = ["h", "d", "c", "s"] as const
-  return { id: offset, suit: suitMap[offset % 4] as any, rank }
+  return { id: offset, suit: suitMap[offset % 4] as Suit, rank }
 }
 
 describe("recognizeCombo", () => {
@@ -82,6 +82,33 @@ describe("recognizeCombo", () => {
     ])
     expect(result?.type).toBe(ComboType.Bomb)
     expect(result?.mainRank).toBe(10)
+  })
+
+  it("识别四带二 (4+2 单牌)", () => {
+    const result = recognizeCombo([
+      card(8), card(8, 1), card(8, 2), card(8, 3),
+      card(5), card(6),
+    ])
+    expect(result?.type).toBe(ComboType.FourPlus2)
+    expect(result?.mainRank).toBe(8)
+  })
+
+  it("识别四带二 (4+一对)", () => {
+    const result = recognizeCombo([
+      card(8), card(8, 1), card(8, 2), card(8, 3),
+      card(5), card(5, 4),
+    ])
+    expect(result?.type).toBe(ComboType.FourPlus2)
+    expect(result?.mainRank).toBe(8)
+  })
+
+  it("识别四带二 (4+两对，8 张)", () => {
+    const result = recognizeCombo([
+      card(8), card(8, 1), card(8, 2), card(8, 3),
+      card(5), card(5, 4), card(6), card(6, 5),
+    ])
+    expect(result?.type).toBe(ComboType.FourPlus2)
+    expect(result?.mainRank).toBe(8)
   })
 
   it("识别王炸", () => {

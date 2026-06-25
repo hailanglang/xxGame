@@ -45,6 +45,21 @@ export function recognizeCombo(cards: Card[]): Combo | null {
     return makeCombo(ComboType.Bomb, groups[0][0], cards)
   }
 
+  // ---- 四带二 (优先级高于飞机/顺子等) ----
+  if (n === 6) {
+    const four = groups.find(([, cs]) => cs.length === 4)
+    if (four) {
+      // 可以是两个单张 (groups.length===3) 或一对 (groups.length===2)
+      return makeCombo(ComboType.FourPlus2, four[0], cards)
+    }
+  }
+  if (n === 8) {
+    const four = groups.find(([, cs]) => cs.length === 4)
+    if (four && groups.length === 3 && groups.filter(([, cs]) => cs.length === 2).length === 2) {
+      return makeCombo(ComboType.FourPlus2, four[0], cards)
+    }
+  }
+
   if (n === 1) return makeCombo(ComboType.Single, cards[0].rank, cards)
   if (n === 2 && groups.length === 1) return makeCombo(ComboType.Pair, groups[0][0], cards)
   if (n === 3 && groups.length === 1) return makeCombo(ComboType.Triple, groups[0][0], cards)
@@ -79,7 +94,7 @@ export function recognizeCombo(cards: Card[]): Combo | null {
   }
 
   // ---- 飞机 (≥2 个三条) ----
-  const triples = groups.filter(([, cs]) => cs.length >= 3).map(([r]) => r).sort((a, b) => b - a)
+  const triples = groups.filter(([, cs]) => cs.length === 3).map(([r]) => r).sort((a, b) => b - a)
   if (triples.length >= 2 && isConsecutive(triples)) {
     const nTriple = triples.length
     const usedCards = nTriple * 3
@@ -100,20 +115,6 @@ export function recognizeCombo(cards: Card[]): Combo | null {
       if (isPairs) {
         return makeCombo(ComboType.PlanePlusWings, triples[0], cards)
       }
-    }
-  }
-
-  // ---- 四带二 ----
-  if (n === 6) {
-    const four = groups.find(([, cs]) => cs.length === 4)
-    if (four && groups.length === 3) {
-      return makeCombo(ComboType.FourPlus2, four[0], cards)
-    }
-  }
-  if (n === 8) {
-    const four = groups.find(([, cs]) => cs.length === 4)
-    if (four && groups.length === 3 && groups.filter(([, cs]) => cs.length === 2).length === 2) {
-      return makeCombo(ComboType.FourPlus2, four[0], cards)
     }
   }
 
