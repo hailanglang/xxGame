@@ -1,11 +1,69 @@
 import Phaser from "phaser"
+import { GameState, RANK_NAMES } from "../logic/types"
 
 export class ResultScene extends Phaser.Scene {
   constructor() {
     super({ key: "ResultScene" })
   }
 
-  create() {
-    // Placeholder — will be implemented in a later task
+  create(data: { gameState: GameState }) {
+    const { width, height } = this.cameras.main
+    this.cameras.main.setBackgroundColor("#1a6b3c")
+
+    const gs = data.gameState
+    const isHumanWin = gs.winner === 0
+
+    // 结果文字
+    const resultText = isHumanWin ? "🎉 你赢了！" : "😞 你输了"
+    this.add
+      .text(width / 2, height * 0.3, resultText, {
+        fontSize: "48px",
+        color: isHumanWin ? "#ffd700" : "#ff4444",
+        stroke: "#000000",
+        strokeThickness: 4,
+      })
+      .setOrigin(0.5)
+
+    // 统计信息
+    const names = ["我", "下家", "上家"]
+    const info = gs.hands
+      .map((h, i) => `${names[i]}: ${h.length} 张`)
+      .join("  |  ")
+    this.add
+      .text(width / 2, height * 0.45, info, {
+        fontSize: "18px",
+        color: "#cccccc",
+      })
+      .setOrigin(0.5)
+
+    // Token 用量提示
+    this.add
+      .text(width / 2, height * 0.52, "Token 用量详情请查看游戏外设置面板", {
+        fontSize: "14px",
+        color: "#888888",
+      })
+      .setOrigin(0.5)
+
+    // 再来一局
+    const replayBtn = this.add
+      .text(width / 2, height * 0.65, "[ 再来一局 ]", {
+        fontSize: "28px",
+        color: "#ffffff",
+        backgroundColor: "#d4a017",
+        padding: { x: 24, y: 10 },
+      })
+      .setOrigin(0.5)
+      .setInteractive({ useHandCursor: true })
+      .on("pointerdown", () => this.scene.start("DealingScene"))
+
+    // 返回菜单
+    this.add
+      .text(width / 2, height * 0.78, "返回主菜单", {
+        fontSize: "18px",
+        color: "#aaaaaa",
+      })
+      .setOrigin(0.5)
+      .setInteractive({ useHandCursor: true })
+      .on("pointerdown", () => this.scene.start("MenuScene"))
   }
 }
