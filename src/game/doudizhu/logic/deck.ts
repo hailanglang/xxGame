@@ -44,13 +44,18 @@ export function dealCards(shuffled: Card[]): {
   }
 }
 
+/** 对手牌进行排序: 按点数升序, 同点数按 id 升序 */
+export function sortHand(cards: Card[]): Card[] {
+  return [...cards].sort((a, b) => a.rank - b.rank || a.id - b.id)
+}
+
 /** 将底牌交给地主 */
 export function assignLandlord(
   state: GameState,
   landlordPos: PlayerPosition
 ): GameState {
   const newHands: [Card[], Card[], Card[]] = [...state.hands]
-  newHands[landlordPos] = [...newHands[landlordPos], ...state.dizhuCards]
+  newHands[landlordPos] = sortHand([...newHands[landlordPos], ...state.dizhuCards])
   return { ...state, landlord: landlordPos, hands: newHands, dizhuCards: [] }
 }
 
@@ -61,7 +66,7 @@ export function initGame(): GameState {
   return {
     phase: "dealing",
     deck,
-    hands,
+    hands: hands.map(sortHand) as [Card[], Card[], Card[]],
     dizhuCards,
     landlord: null,
     currentPlayer: 0,

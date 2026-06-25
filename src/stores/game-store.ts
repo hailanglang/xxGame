@@ -25,7 +25,7 @@ export const useGameStore = create<GameState>()(
       setDoudizhuTokenUsage: (doudizhuTokenUsage) => set({ doudizhuTokenUsage }),
     }),
     {
-      name: "xxgame_game_store",
+      name: "2048_deepseek_api_key",
       storage: createJSONStorage(() => localStorage),
     },
   ),

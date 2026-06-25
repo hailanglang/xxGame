@@ -296,7 +296,7 @@ export class PlayScene extends Phaser.Scene {
     this.showLastPlay(player, combo)
 
     // 特效
-    if (combo.type === "bomb" || combo.type === "rocket") {
+    if (combo.type === ComboType.Bomb || combo.type === ComboType.Rocket) {
       this.particles.playBomb(this.cameras.main.width / 2, this.cameras.main.height / 2)
     }
 

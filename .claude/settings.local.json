@@ -4,7 +4,15 @@
       "Bash([ -d \"$HOME/.claude/commands\" ])",
       "Bash([ -d \"$HOME/.claude/agents\" ])",
       "mcp__Framelink_MCP_for_Figma__get_figma_data",
-      "mcp__Framelink_MCP_for_Figma__download_figma_images"
+      "mcp__Framelink_MCP_for_Figma__download_figma_images",
+      "Bash(bash *)",
+      "Bash(pnpm tsc *)",
+      "Bash(npx tsc *)",
+      "Bash(node node_modules/typescript/bin/tsc --noEmit)",
+      "Bash(echo \"Exit code: $?\")",
+      "Bash(pnpm dlx *)",
+      "Bash(echo \"EXIT_CODE: $?\")",
+      "PowerShell(pnpm tsc *)"
     ]
   },
   "enableAllProjectMcpServers": true,
