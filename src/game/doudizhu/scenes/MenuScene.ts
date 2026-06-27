@@ -58,9 +58,21 @@ export class MenuScene extends Phaser.Scene {
       this.scene.start("DealingScene")
     })
 
+    // 调试按钮
+    this.add
+      .text(width / 2, height * 0.7, "[ 牌面调试 ]", {
+        fontSize: `${px(16, this)}px`,
+        color: "#888888",
+      })
+      .setOrigin(0.5)
+      .setInteractive({ useHandCursor: true })
+      .on("pointerdown", () => {
+        this.scene.start("DebugScene")
+      })
+
     // 返回社区按钮
     const backBtn = this.add
-      .text(width / 2, height * 0.7, "← 返回社区", {
+      .text(width / 2, height * 0.78, "← 返回社区", {
         fontSize: `${px(48, this)}px`,
         color: "#aaaaaa",
       })

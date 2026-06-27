@@ -2,10 +2,11 @@
 import Phaser from "phaser"
 import type { GameState, Card, Combo, PlayerPosition } from "../logic/types"
 import { px } from "../utils/scale"
-import { RANK_NAMES, ComboType } from "../logic/types"
+import { ComboType } from "../logic/types"
 import { recognizeCombo } from "../logic/rules"
 import { canBeat } from "../logic/compare"
 import { HandFan } from "../ui/HandFan"
+import { CardSprite } from "../ui/Card"
 import { PlayerAvatar } from "../ui/PlayerAvatar"
 import { Countdown } from "../ui/Countdown"
 import { ParticleEffects } from "../ui/ParticleEffects"
@@ -23,7 +24,7 @@ export class PlayScene extends Phaser.Scene {
   private gameState!: GameState
   private myHand!: HandFan
   private avatars!: PlayerAvatar[]
-  private lastPlayTexts!: (Phaser.GameObjects.Text | null)[]
+  private lastPlayCards!: (Phaser.GameObjects.Container | null)[]
   private countdown!: Countdown
   private particles!: ParticleEffects
   private currentTurnAction: (() => void) | null = null
@@ -45,7 +46,7 @@ export class PlayScene extends Phaser.Scene {
     this.gameState.phase = "playing"
 
     // ---- 出牌区（中央） ----
-    this.lastPlayTexts = [null, null, null]
+    this.lastPlayCards = [null, null, null]
 
     // ---- 玩家信息 ----
     const names = ["我", "下家", "上家"]
@@ -56,12 +57,12 @@ export class PlayScene extends Phaser.Scene {
     ]
 
     // ---- 我的手牌（底部扇形） ----
-    this.myHand = new HandFan(this, width / 2, height - px(50, this))
+    this.myHand = new HandFan(this, width / 2, height - px(80, this))
     this.myHand.setHand(this.gameState.hands[0], true)
 
     // ---- 出牌按钮 ----
     this.add
-      .text(width / 2 - px(60, this), height - px(130, this), "出牌", {
+      .text(width / 2 - px(60, this), height - px(230, this), "出牌", {
         fontSize: `${px(20, this)}px`,
         color: "#ffffff",
         backgroundColor: "#d4a017",
@@ -72,7 +73,7 @@ export class PlayScene extends Phaser.Scene {
       .on("pointerdown", () => this.onHumanPlay())
 
     this.add
-      .text(width / 2 + px(60, this), height - px(130, this), "不出", {
+      .text(width / 2 + px(60, this), height - px(230, this), "不出", {
         fontSize: `${px(20, this)}px`,
         color: "#ffffff",
         backgroundColor: "#666666",
@@ -83,7 +84,7 @@ export class PlayScene extends Phaser.Scene {
       .on("pointerdown", () => this.onHumanPass())
 
     // ---- 倒计时 ----
-    this.countdown = new Countdown(this, width / 2 - px(100, this), height - px(170, this), px(200, this), () => {
+    this.countdown = new Countdown(this, width / 2 - px(100, this), height - px(270, this), px(200, this), () => {
       this.onHumanTimeout()
     })
 
@@ -339,43 +340,37 @@ export class PlayScene extends Phaser.Scene {
   private showLastPlay(player: PlayerPosition, combo: Combo | null) {
     const { width, height } = this.cameras.main
     const positions = [
-      { x: width / 2, y: height - px(200, this) },
-      { x: width / 2 + px(150, this), y: height / 2 },
-      { x: width / 2 - px(150, this), y: height / 2 },
+      { x: width / 2, y: height - px(300, this) },
+      { x: width / 2 + px(200, this), y: height / 2 },
+      { x: width / 2 - px(200, this), y: height / 2 },
     ]
 
-    // 清除旧文本
-    if (this.lastPlayTexts[player]) {
-      this.lastPlayTexts[player]!.destroy()
+    // 清除上一次的出牌展示
+    if (this.lastPlayCards[player]) {
+      this.lastPlayCards[player]!.destroy()
+      this.lastPlayCards[player] = null
     }
 
     if (!combo) {
       // 显示"不出"
-      this.lastPlayTexts[player] = this.add
-        .text(positions[player].x, positions[player].y, "不出", {
-          fontSize: `${px(18, this)}px`,
-          color: "#aaaaaa",
-        })
-        .setOrigin(0.5)
+      this.lastPlayCards[player] = this.add.container(positions[player].x, positions[player].y)
+      const t = this.add.text(0, 0, "不出", {
+        fontSize: `${px(18, this)}px`,
+        color: "#aaaaaa",
+      }).setOrigin(0.5)
+      this.lastPlayCards[player]!.add(t)
       return
     }
 
-    const cardStr = combo.cards
-      .map((c) => {
-        const suitSymbol: Record<string, string> = { h: "♥", d: "♦", c: "♣", s: "♠" }
-        const s = c.suit ? suitSymbol[c.suit] : ""
-        return `${s}${RANK_NAMES[c.rank]}`
-      })
-      .join(" ")
-
-    this.lastPlayTexts[player] = this.add
-      .text(positions[player].x, positions[player].y, cardStr, {
-        fontSize: `${px(22, this)}px`,
-        color: "#ffffff",
-        stroke: "#000000",
-        strokeThickness: px(3, this),
-      })
-      .setOrigin(0.5)
+    // 用 CardSprite 展示打出的牌
+    const container = this.add.container(positions[player].x, positions[player].y)
+    const gap = px(30, this)
+    const totalW = (combo.cards.length - 1) * gap
+    combo.cards.forEach((card, i) => {
+      const cs = new CardSprite(this, i * gap - totalW / 2, 0, card, true)
+      container.add(cs)
+    })
+    this.lastPlayCards[player] = container
   }
 
   private showToast(msg: string) {

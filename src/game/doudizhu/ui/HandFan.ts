@@ -1,8 +1,19 @@
 // src/game/doudizhu/ui/HandFan.ts
 import Phaser from "phaser"
-import { CardSprite } from "./Card"
+import { CardSprite, CARD_BASE_WIDTH } from "./Card"
 import { Card } from "../logic/types"
+import { px } from "../utils/scale"
 
+/**
+ * 扇形手牌容器
+ *
+ * 将手牌排列为横向扇形布局，支持选中/取消选中交互。
+ * 牌间距根据手牌数量自动调整（>10 张较紧凑，≤10 张较宽松）。
+ *
+ * @param scene 所属 Phaser 场景
+ * @param x     容器中心 x 坐标
+ * @param y     容器中心 y 坐标
+ */
 export class HandFan extends Phaser.GameObjects.Container {
   private cards: CardSprite[] = []
 
@@ -15,8 +26,8 @@ export class HandFan extends Phaser.GameObjects.Container {
     this.removeAll(true)
     this.cards = []
 
-    const cardWidth = 71
-    const overlap = hand.length > 10 ? 20 : 28
+    const cardWidth = px(CARD_BASE_WIDTH, this.scene)
+    const overlap = hand.length > 10 ? px(30, this.scene) : px(42, this.scene)
     const totalWidth = (hand.length - 1) * overlap + cardWidth
     const startX = -totalWidth / 2
 

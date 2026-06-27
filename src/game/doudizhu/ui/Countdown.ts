@@ -1,6 +1,18 @@
 // src/game/doudizhu/ui/Countdown.ts
 import Phaser from "phaser"
+import { px } from "../utils/scale"
 
+/**
+ * 倒计时条
+ *
+ * 横向进度条，计时归零时触发回调。颜色在剩余 >30% 时为金色，≤30% 时为红色。
+ *
+ * @param scene     所属 Phaser 场景
+ * @param x         条左上角 x 坐标
+ * @param y         条左上角 y 坐标
+ * @param width     条宽度 (像素)
+ * @param onTimeout 超时回调函数
+ */
 export class Countdown extends Phaser.GameObjects.Container {
   private bar: Phaser.GameObjects.Graphics
   private totalTime: number
@@ -48,6 +60,6 @@ export class Countdown extends Phaser.GameObjects.Container {
     const pct = Math.max(0, this.remaining / this.totalTime)
     const color = pct > 0.3 ? 0xd4a017 : 0xcc0000
     this.bar.fillStyle(color, 1)
-    this.bar.fillRoundedRect(0, 0, this.barWidth * pct, 8, 4)
+    this.bar.fillRoundedRect(0, 0, this.barWidth * pct, px(8, this.scene), px(4, this.scene))
   }
 }

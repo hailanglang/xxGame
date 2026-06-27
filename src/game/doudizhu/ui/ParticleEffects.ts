@@ -1,6 +1,14 @@
 // src/game/doudizhu/ui/ParticleEffects.ts
 import Phaser from "phaser"
+import { px } from "../utils/scale"
 
+/**
+ * 粒子特效
+ *
+ * 出牌 / 胜利时的视觉特效。非 Container，直接通过场景的 tween 创建和销毁粒子。
+ *
+ * @param scene 所属 Phaser 场景
+ */
 export class ParticleEffects {
   private scene: Phaser.Scene
 
@@ -9,13 +17,13 @@ export class ParticleEffects {
   }
 
   playBomb(x: number, y: number) {
-    // 炸弹特效：红色火花
     for (let i = 0; i < 20; i++) {
-      const particle = this.scene.add.circle(x, y, Phaser.Math.Between(2, 5), 0xff4400)
+      const r = Phaser.Math.Between(px(2, this.scene), px(5, this.scene))
+      const particle = this.scene.add.circle(x, y, r, 0xff4400)
       this.scene.tweens.add({
         targets: particle,
-        x: x + Phaser.Math.Between(-100, 100),
-        y: y + Phaser.Math.Between(-100, 100),
+        x: x + Phaser.Math.Between(-px(100, this.scene), px(100, this.scene)),
+        y: y + Phaser.Math.Between(-px(100, this.scene), px(100, this.scene)),
         alpha: 0,
         scale: 0,
         duration: Phaser.Math.Between(300, 600),
@@ -25,17 +33,17 @@ export class ParticleEffects {
   }
 
   playWin(x: number, y: number) {
-    // 胜利特效：金色烟花
     for (let i = 0; i < 40; i++) {
       const color = Math.random() > 0.5 ? 0xffd700 : 0xff4444
-      const p = this.scene.add.circle(x, y, Phaser.Math.Between(3, 6), color)
+      const r = Phaser.Math.Between(px(3, this.scene), px(6, this.scene))
+      const p = this.scene.add.circle(x, y, r, color)
       this.scene.tweens.add({
         targets: p,
-        y: y - Phaser.Math.Between(200, 400),
-        x: x + Phaser.Math.Between(-150, 150),
+        y: y - Phaser.Math.Between(px(200, this.scene), px(400, this.scene)),
+        x: x + Phaser.Math.Between(-px(150, this.scene), px(150, this.scene)),
         alpha: 0,
         duration: Phaser.Math.Between(500, 1000),
-        delay: i * 30,
+        delay: i * px(30, this.scene),
         onComplete: () => p.destroy(),
       })
     }
