@@ -8,7 +8,7 @@ import { px } from "../utils/scale"
  * 扇形手牌容器
  *
  * 将手牌排列为横向扇形布局，支持选中/取消选中交互。
- * 牌间距根据手牌数量自动调整（>10 张较紧凑，≤10 张较宽松）。
+ * 牌间距根据手牌数量自动调整，参考 Figma 设计（重叠约 60% 卡片宽度）。
  *
  * @param scene 所属 Phaser 场景
  * @param x     容器中心 x 坐标
@@ -26,8 +26,13 @@ export class HandFan extends Phaser.GameObjects.Container {
     this.removeAll(true)
     this.cards = []
 
+    if (hand.length === 0) return
+
     const cardWidth = px(CARD_BASE_WIDTH, this.scene)
-    const overlap = hand.length > 10 ? px(30, this.scene) : px(42, this.scene)
+    // Figma 设计：20 张手牌时 cardWidth=92, overlap=56 → overlap ≈ cardWidth × 0.6
+    // 牌多时紧凑，牌少时宽松
+    const overlapRatio = hand.length > 17 ? 0.55 : hand.length > 10 ? 0.6 : 0.7
+    const overlap = Math.round(cardWidth * overlapRatio)
     const totalWidth = (hand.length - 1) * overlap + cardWidth
     const startX = -totalWidth / 2
 
@@ -47,5 +52,9 @@ export class HandFan extends Phaser.GameObjects.Container {
 
   deselectAll() {
     this.cards.forEach((c) => c.deselect())
+  }
+
+  getCards(): CardSprite[] {
+    return this.cards
   }
 }

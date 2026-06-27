@@ -6,7 +6,7 @@ import { ComboType } from "../logic/types"
 import { recognizeCombo } from "../logic/rules"
 import { canBeat } from "../logic/compare"
 import { HandFan } from "../ui/HandFan"
-import { CardSprite } from "../ui/Card"
+import { CardSprite, CARD_BACK_WIDTH, CARD_BACK_HEIGHT } from "../ui/Card"
 import { PlayerAvatar } from "../ui/PlayerAvatar"
 import { Countdown } from "../ui/Countdown"
 import { ParticleEffects } from "../ui/ParticleEffects"
@@ -25,9 +25,11 @@ export class PlayScene extends Phaser.Scene {
   private myHand!: HandFan
   private avatars!: PlayerAvatar[]
   private lastPlayCards!: (Phaser.GameObjects.Container | null)[]
+  private bottomCardsContainer!: Phaser.GameObjects.Container // 底牌展示
   private countdown!: Countdown
   private particles!: ParticleEffects
   private currentTurnAction: (() => void) | null = null
+  private panelBacks!: (Phaser.GameObjects.Graphics | null)[] // 左右面板的牌背堆叠
 
   constructor() {
     super({ key: "PlayScene" })
@@ -42,49 +44,45 @@ export class PlayScene extends Phaser.Scene {
     const { width, height } = this.cameras.main
     this.cameras.main.setBackgroundColor("#1a6b3c")
 
-    // 游戏正式开始
     this.gameState.phase = "playing"
 
-    // ---- 出牌区（中央） ----
+    // ---- 出牌区 ----
     this.lastPlayCards = [null, null, null]
+    this.panelBacks = [null, null]
 
-    // ---- 玩家信息 ----
-    const names = ["我", "下家", "上家"]
+    // ---- 左侧面板 (上家) ----
+    this.createSidePanel(0, 2)
+
+    // ---- 右侧面板 (下家) ----
+    this.createSidePanel(1, 1)
+
+    // ---- 中央底牌区 ----
+    this.createBottomCards()
+
+    // ---- 玩家信息 (底部) ----
     this.avatars = [
-      new PlayerAvatar(this, px(40, this), height - px(60, this), names[0], this.gameState.landlord === 0),
-      new PlayerAvatar(this, width - px(180, this), height / 2 - px(40, this), names[1], this.gameState.landlord === 1),
-      new PlayerAvatar(this, px(40, this), height / 2 - px(40, this), names[2], this.gameState.landlord === 2),
+      new PlayerAvatar(this, px(24, this), height - px(250, this), "我", "你（农民）", this.gameState.hands[0].length, this.gameState.landlord === 0, "left"),
+      new PlayerAvatar(this, width - px(24, this), px(24, this), "李", "AI 李四", this.gameState.hands[1].length, this.gameState.landlord === 1, "right"),
+      new PlayerAvatar(this, px(24, this), px(24, this), "张", "AI 张三", this.gameState.hands[2].length, this.gameState.landlord === 2, "left"),
     ]
 
-    // ---- 我的手牌（底部扇形） ----
-    this.myHand = new HandFan(this, width / 2, height - px(80, this))
+    // ---- 我的手牌 ----
+    this.myHand = new HandFan(this, width / 2, height - px(70, this))
     this.myHand.setHand(this.gameState.hands[0], true)
 
-    // ---- 出牌按钮 ----
-    this.add
-      .text(width / 2 - px(60, this), height - px(230, this), "出牌", {
-        fontSize: `${px(20, this)}px`,
-        color: "#ffffff",
-        backgroundColor: "#d4a017",
-        padding: { x: px(16, this), y: px(6, this) },
-      })
-      .setOrigin(0.5)
-      .setInteractive({ useHandCursor: true })
-      .on("pointerdown", () => this.onHumanPlay())
+    // ---- 操作按钮 (底部居中) ----
+    const btnY = height - px(12, this)
+    const btnGap = px(120, this)
 
-    this.add
-      .text(width / 2 + px(60, this), height - px(230, this), "不出", {
-        fontSize: `${px(20, this)}px`,
-        color: "#ffffff",
-        backgroundColor: "#666666",
-        padding: { x: px(16, this), y: px(6, this) },
-      })
-      .setOrigin(0.5)
-      .setInteractive({ useHandCursor: true })
-      .on("pointerdown", () => this.onHumanPass())
+    // 不出
+    this.createButton(width / 2 - btnGap, btnY, "不出", 0x666666, () => this.onHumanPass())
+    // 出牌
+    this.createButton(width / 2, btnY, "出牌", 0xd4a017, () => this.onHumanPlay())
+    // 提示
+    this.createButton(width / 2 + btnGap, btnY, "提示", 0x666666, () => this.onHumanHint())
 
     // ---- 倒计时 ----
-    this.countdown = new Countdown(this, width / 2 - px(100, this), height - px(270, this), px(200, this), () => {
+    this.countdown = new Countdown(this, width / 2 - px(80, this), height - px(170, this), px(160, this), () => {
       this.onHumanTimeout()
     })
 
@@ -99,6 +97,86 @@ export class PlayScene extends Phaser.Scene {
     this.countdown.update(delta)
   }
 
+  // ==================== 布局辅助 ====================
+
+  /** 创建侧边面板 (对手信息 + 牌背堆叠 + 出牌区) */
+  private createSidePanel(playerIdx: PlayerPosition, panelSide: number) {
+    const { width, height } = this.cameras.main
+    const panelW = px(176, this)
+    const isRight = panelSide === 1
+    const panelX = isRight ? width - panelW : 0
+
+    // 半透明面板底色
+    const panelBg = this.add.graphics()
+    panelBg.fillStyle(0x000000, 0.08)
+    panelBg.fillRoundedRect(panelX, 0, panelW, height * 0.55, px(8, this))
+    panelBg.setDepth(-1)
+
+    // 牌背堆叠 (从上家/下家的 avatar 下方开始)
+    const stackX = isRight ? panelX + panelW - px(10, this) : panelX + px(10, this)
+    const stackY = px(65, this)
+    const direction = isRight ? "left" : "right"
+    const count = this.gameState.hands[playerIdx].length
+    this.drawCardBackStack(stackX, stackY, count, direction)
+  }
+
+  /** 绘制对手牌背堆叠 */
+  private drawCardBackStack(x: number, y: number, count: number, direction: "left" | "right") {
+    const g = this.add.graphics()
+    const w = px(CARD_BACK_WIDTH, this)
+    const h = px(CARD_BACK_HEIGHT, this)
+    const spacing = px(6, this)
+
+    for (let i = 0; i < Math.min(count, 20); i++) {
+      const cx = direction === "right" ? x + i * spacing : x - i * spacing
+      g.fillStyle(0x1a3c6b, 1)
+      g.fillRoundedRect(cx - w / 2, y - h / 2, w, h, px(3, this))
+      g.lineStyle(px(1.5, this), 0x2a5c9b, 1)
+      g.strokeRoundedRect(cx - w / 2, y - h / 2, w, h, px(3, this))
+    }
+    this.panelBacks.push(g)
+  }
+
+  /** 创建中央底牌区 */
+  private createBottomCards() {
+    const { width } = this.cameras.main
+    const centerX = width / 2
+    const topY = px(80, this)
+
+    // "底牌" 标签
+    this.add.text(centerX, topY - px(24, this), "底牌", {
+      fontSize: `${px(14, this)}px`,
+      color: "#aaaaaa",
+    }).setOrigin(0.5)
+
+    // 3 张底牌 (face up, small size)
+    this.bottomCardsContainer = this.add.container(centerX, topY)
+    const bottomCards = this.gameState.deck.slice(51, 54)
+    const gap = px(60, this)
+    const totalW = (bottomCards.length - 1) * gap
+    bottomCards.forEach((card, i) => {
+      const cs = new CardSprite(this, i * gap - totalW / 2, 0, card, true, true)
+      this.bottomCardsContainer.add(cs)
+    })
+  }
+
+  /** 创建操作按钮 */
+  private createButton(x: number, y: number, label: string, color: number, onClick: () => void) {
+    const btn = this.add.text(0, 0, label, {
+      fontSize: `${px(18, this)}px`,
+      color: "#ffffff",
+      backgroundColor: `#${color.toString(16).padStart(6, "0")}`,
+      padding: { x: px(20, this), y: px(8, this) },
+    })
+    .setOrigin(0.5)
+    .setInteractive({ useHandCursor: true })
+    btn.setPosition(x, y)
+    btn.on("pointerover", () => btn.setScale(1.05))
+    btn.on("pointerout", () => btn.setScale(1))
+    btn.on("pointerdown", () => onClick())
+    return btn
+  }
+
   // ==================== 回合管理 ====================
 
   private startTurn() {
@@ -106,6 +184,9 @@ export class PlayScene extends Phaser.Scene {
     this.gameState.hands.forEach((hand, i) => {
       this.avatars[i].setCardCount(hand.length)
     })
+
+    // 更新左右面板的牌背堆叠
+    this.updatePanelBacks()
 
     if (this.gameState.phase === "finished") {
       this.scene.start("ResultScene", { gameState: this.gameState })
@@ -121,6 +202,15 @@ export class PlayScene extends Phaser.Scene {
       this.currentTurnAction = () => this.handleAiTurn()
       this.time.delayedCall(500, () => this.currentTurnAction?.())
     }
+  }
+
+  private updatePanelBacks() {
+    // 销毁旧牌背
+    this.panelBacks.forEach((g) => g?.destroy())
+    this.panelBacks = []
+    // 重新创建
+    this.createSidePanel(0, 2)
+    this.createSidePanel(1, 1)
   }
 
   // ==================== 玩家操作 ====================
@@ -145,7 +235,6 @@ export class PlayScene extends Phaser.Scene {
 
   private onHumanPass() {
     if (this.gameState.currentPlayer !== 0) return
-    // 如果自己是首轮出牌或上一手也是自己出的，不能 pass
     if (!this.gameState.lastPlay || this.gameState.lastPlay.player === 0) {
       this.showToast("必须出牌")
       return
@@ -153,17 +242,41 @@ export class PlayScene extends Phaser.Scene {
     this.executePass(0)
   }
 
+  private onHumanHint() {
+    if (this.gameState.currentPlayer !== 0) return
+    // 提示功能：高亮一个可以出的牌
+    const hand = this.gameState.hands[0]
+    const lastCombo = this.gameState.lastPlay?.combo ?? null
+
+    // 尝试找最小的能出的牌型
+    for (let len = 1; len <= Math.min(hand.length, 20); len++) {
+      for (let i = 0; i <= hand.length - len; i++) {
+        const subset = hand.slice(i, i + len)
+        const combo = recognizeCombo(subset)
+        if (combo && (!lastCombo || canBeat(combo, lastCombo))) {
+          // 找到提示，高亮对应的手牌
+          this.myHand.deselectAll()
+          const cards = this.myHand.getCards()
+          subset.forEach((card) => {
+            const c = cards.find((cs) => cs.cardData.id === card.id)
+            if (c) c.toggleSelect()
+          })
+          this.showToast("提示成功")
+          return
+        }
+      }
+    }
+    this.showToast("没有能出的牌")
+  }
+
   private onHumanTimeout() {
     if (this.gameState.currentPlayer !== 0) return
-    // 超时自动出最小牌或 pass
     if (!this.gameState.lastPlay || this.gameState.lastPlay.player === 0) {
-      // 出最小的单张
       const minCard = this.gameState.hands[0][0]
       const combo = recognizeCombo([minCard])
       if (combo) {
         this.executePlay(0, [minCard], combo)
       } else {
-        // 降级：牌型识别失败时仍强制出牌，防止死锁
         this.executePlay(0, [minCard], { type: ComboType.Single, mainRank: minCard.rank, length: 1, cards: [minCard] })
       }
     } else {
@@ -177,17 +290,14 @@ export class PlayScene extends Phaser.Scene {
     const player = this.gameState.currentPlayer
     const hand = this.gameState.hands[player]
 
-    // 通过 DeepSeek API 获取决策
     const decision = await this.callAi(player)
-    if (!this.scene.isActive()) return  // 防止场景销毁后继续执行
+    if (!this.scene.isActive()) return
 
     if (!decision || decision.action === "pass") {
-      // AI 选择 pass
       const canPass = this.gameState.lastPlay && this.gameState.lastPlay.player !== player
       if (canPass) {
         this.executePass(player)
       } else {
-        // 不能 pass，出最小单张
         const minCard = hand[0]
         const combo = recognizeCombo([minCard])
         if (combo) this.executePlay(player, [minCard], combo)
@@ -195,7 +305,6 @@ export class PlayScene extends Phaser.Scene {
       return
     }
 
-    // 验证 AI 出牌
     const combo = validateAiPlay(
       hand,
       "play",
@@ -204,11 +313,9 @@ export class PlayScene extends Phaser.Scene {
     )
 
     if (combo) {
-      // 从 hand 中获取对应的 Card 对象
       const selectedCards = hand.filter((c) => decision.cards.includes(c.id))
       this.executePlay(player, selectedCards, combo)
     } else {
-      // 降级：出最小能出的牌
       const fallback = this.findSmallestPlay(hand)
       if (fallback) {
         this.executePlay(player, fallback.cards, fallback)
@@ -222,7 +329,6 @@ export class PlayScene extends Phaser.Scene {
     try {
       const apiKey = useGameStore.getState().doudizhuApiKey
       if (!apiKey) {
-        // 无 API Key 时使用简单策略
         return this.fallbackAi(player)
       }
 
@@ -237,20 +343,17 @@ export class PlayScene extends Phaser.Scene {
     }
   }
 
-  /** 无 API Key 或调用失败时的简单 AI 策略 */
   private fallbackAi(player: PlayerPosition): AiDecision {
     const hand = this.gameState.hands[player]
     const lastCombo = this.gameState.lastPlay?.combo ?? null
 
     if (!lastCombo || this.gameState.lastPlay?.player === player) {
-      // 自由出牌：出最小的牌
       const combo = recognizeCombo([hand[0]])
       if (combo) {
         return { action: "play", cards: [hand[0].id], reason: "出最小牌" }
       }
     }
 
-    // 尝试找最小的能打过的牌
     const play = this.findSmallestPlay(hand)
     if (play) {
       return { action: "play", cards: play.cards.map((c) => c.id), reason: "出牌" }
@@ -265,7 +368,6 @@ export class PlayScene extends Phaser.Scene {
       return recognizeCombo([hand[0]])
     }
 
-    // 尝试所有可能的牌组合（简单策略：1张~4张）
     for (let len = 1; len <= Math.min(hand.length, 20); len++) {
       for (let i = 0; i <= hand.length - len; i++) {
         const subset = hand.slice(i, i + len)
@@ -279,30 +381,24 @@ export class PlayScene extends Phaser.Scene {
   // ==================== 执行出牌 ====================
 
   private executePlay(player: PlayerPosition, cards: Card[], combo: Combo) {
-    // 从手牌中移除
     const removedIds = new Set(cards.map((c) => c.id))
     const newHand = this.gameState.hands[player].filter((c) => !removedIds.has(c.id))
     this.gameState.hands[player] = newHand
 
-    // 更新状态
     this.gameState.lastPlay = { player, combo }
     this.gameState.passCount = 0
 
-    // 更新 UI
     if (player === 0) {
       this.myHand.setHand(newHand, true)
     }
     this.avatars[player].setCardCount(newHand.length)
 
-    // 显示出的牌
     this.showLastPlay(player, combo)
 
-    // 特效
     if (combo.type === ComboType.Bomb || combo.type === ComboType.Rocket) {
       this.particles.playBomb(this.cameras.main.width / 2, this.cameras.main.height / 2)
     }
 
-    // 检查是否出完
     if (newHand.length === 0) {
       this.gameState.winner = player
       this.gameState.phase = "finished"
@@ -313,7 +409,6 @@ export class PlayScene extends Phaser.Scene {
       return
     }
 
-    // 下一家
     this.nextPlayer()
   }
 
@@ -321,7 +416,6 @@ export class PlayScene extends Phaser.Scene {
     this.gameState.passCount++
     this.showLastPlay(player, null)
 
-    // 如果连续两家 pass，上一家自由出牌
     if (this.gameState.passCount >= 2) {
       this.gameState.lastPlay = null
       this.gameState.passCount = 0
@@ -339,35 +433,38 @@ export class PlayScene extends Phaser.Scene {
 
   private showLastPlay(player: PlayerPosition, combo: Combo | null) {
     const { width, height } = this.cameras.main
+
+    // 位置：中央(玩家), 右侧(下家), 左侧(上家)
     const positions = [
-      { x: width / 2, y: height - px(300, this) },
-      { x: width / 2 + px(200, this), y: height / 2 },
-      { x: width / 2 - px(200, this), y: height / 2 },
+      { x: width / 2, y: height * 0.28 },            // 我 (底部出牌区)
+      { x: width - px(88, this), y: height * 0.44 },  // 下家 (右侧面板)
+      { x: px(88, this), y: height * 0.44 },           // 上家 (左侧面板)
     ]
 
-    // 清除上一次的出牌展示
+    // 清除上一次
     if (this.lastPlayCards[player]) {
       this.lastPlayCards[player]!.destroy()
       this.lastPlayCards[player] = null
     }
 
     if (!combo) {
-      // 显示"不出"
       this.lastPlayCards[player] = this.add.container(positions[player].x, positions[player].y)
       const t = this.add.text(0, 0, "不出", {
-        fontSize: `${px(18, this)}px`,
+        fontSize: `${px(16, this)}px`,
         color: "#aaaaaa",
+        fontStyle: "bold",
       }).setOrigin(0.5)
       this.lastPlayCards[player]!.add(t)
       return
     }
 
-    // 用 CardSprite 展示打出的牌
+    // 用小型 CardSprite 展示打出的牌
     const container = this.add.container(positions[player].x, positions[player].y)
-    const gap = px(30, this)
+    const isSidePlayer = player !== 0
+    const gap = isSidePlayer ? px(18, this) : px(28, this)
     const totalW = (combo.cards.length - 1) * gap
     combo.cards.forEach((card, i) => {
-      const cs = new CardSprite(this, i * gap - totalW / 2, 0, card, true)
+      const cs = new CardSprite(this, i * gap - totalW / 2, 0, card, true, true)
       container.add(cs)
     })
     this.lastPlayCards[player] = container

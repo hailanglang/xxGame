@@ -23,21 +23,19 @@ export class DealingScene extends Phaser.Scene {
     const centerX = width / 2
     const centerY = height / 2
 
-    // 玩家信息 (显示姓名和手牌数)
-    const names = ["我", "下家", "上家"]
+    // 玩家信息 — 匹配 PlayScene 布局
     const handSizes = this.gameState.hands.map((h) => h.length)
     this.avatars = [
-      new PlayerAvatar(this, px(40, this), height - px(60, this), names[0], false),
-      new PlayerAvatar(this, width - px(180, this), height / 2 - px(40, this), names[1], false),
-      new PlayerAvatar(this, px(40, this), height / 2 - px(40, this), names[2], false),
+      new PlayerAvatar(this, px(24, this), height - px(250, this), "我", "你（农民）", handSizes[0], false, "left"),
+      new PlayerAvatar(this, width - px(24, this), px(24, this), "李", "AI 李四", handSizes[1], false, "right"),
+      new PlayerAvatar(this, px(24, this), px(24, this), "张", "AI 张三", handSizes[2], false, "left"),
     ]
-    this.avatars.forEach((a, i) => a.setCardCount(handSizes[i]))
 
-    // 三家手牌目标位置 (发牌动画终点)
+    // 三家手牌目标位置
     const targets: Array<{ x: number; y: number }> = [
-      { x: centerX, y: height - px(80, this) },
-      { x: width / 2 + px(280, this), y: height / 2 },
-      { x: width / 2 - px(280, this), y: height / 2 },
+      { x: centerX, y: height - px(70, this) },         // 玩家 (底部)
+      { x: width - px(88, this), y: centerY },           // 下家 (右侧)
+      { x: px(88, this), y: centerY },                    // 上家 (左侧)
     ]
 
     // 创建 54 张牌背面，全部从桌面中央开始
@@ -47,15 +45,15 @@ export class DealingScene extends Phaser.Scene {
       this.cards.push(cs)
     })
 
-    // 发牌动画：前 51 张 round-robin 发到三家，后 3 张留在中央作为底牌
+    // 发牌动画
     deck.forEach((_card, i) => {
       if (i >= 51) {
-        // 3 张底牌：留在中央区域横向散开
-        const bottomOffsetX = (i - 51 - 1) * px(50, this)
+        // 3 张底牌：留在中央区域
+        const bottomOffsetX = (i - 51 - 1) * px(55, this)
         this.tweens.add({
           targets: this.cards[i],
           x: centerX + bottomOffsetX,
-          y: centerY,
+          y: centerY - px(40, this),
           duration: 100,
           delay: i * 30,
         })
@@ -64,9 +62,14 @@ export class DealingScene extends Phaser.Scene {
 
       const targetIdx = (i % 3) as PlayerPosition
       const t = targets[targetIdx]
-      // 同一位置的手牌略微错开，形成扇形效果
       const cardInHand = Math.floor(i / 3)
-      const offsetX = (cardInHand - 8) * px(36, this)
+      // 侧边牌使用更紧凑的间距
+      const spacing = targetIdx === 0 ? px(36, this) : px(6, this)
+      const offsetX = targetIdx === 1
+        ? -cardInHand * spacing  // 下家向左堆叠
+        : targetIdx === 2
+          ? cardInHand * spacing // 上家向右堆叠
+          : (cardInHand - 8) * spacing // 玩家居中
 
       this.tweens.add({
         targets: this.cards[i],
@@ -83,7 +86,14 @@ export class DealingScene extends Phaser.Scene {
   }
 
   private flipBottomCards() {
-    // 翻转 3 张底牌 (scaleY 归零 → yoyo → 翻转为牌面)
+    // "底牌" 标签
+    const { width } = this.cameras.main
+    this.add.text(width / 2, this.cameras.main.height / 2 - px(70, this), "底牌", {
+      fontSize: `${px(14, this)}px`,
+      color: "#aaaaaa",
+    }).setOrigin(0.5)
+
+    // 翻转 3 张底牌
     this.cards.slice(51, 54).forEach((cs) => {
       this.tweens.add({
         targets: cs,
@@ -101,7 +111,6 @@ export class DealingScene extends Phaser.Scene {
   }
 
   private startCallingPhase() {
-    // 简化版：直接指定玩家(0)为地主
     this.gameState = assignLandlord(this.gameState, 0)
     this.scene.start("PlayScene", { gameState: this.gameState })
   }

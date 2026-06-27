@@ -3,21 +3,31 @@ import Phaser from "phaser"
 import { Card as CardData, RANK_NAMES } from "../logic/types"
 import { px } from "../utils/scale"
 
-/** 牌面基准尺寸 (设计宽度 1280px) */
-export const CARD_BASE_WIDTH = 106
-export const CARD_BASE_HEIGHT = 144
+/** 手牌尺寸 (设计宽度 1280px) */
+export const CARD_BASE_WIDTH = 92
+export const CARD_BASE_HEIGHT = 136
+
+/** 出牌展示区小牌尺寸 (底牌 / 已出牌) */
+export const CARD_SMALL_WIDTH = 76
+export const CARD_SMALL_HEIGHT = 112
+
+/** 牌背尺寸 */
+export const CARD_BACK_WIDTH = 72
+export const CARD_BACK_HEIGHT = 108
 
 /**
  * 扑克牌精灵
  *
  * 一张可交互的牌，支持牌面/牌背两种状态、选中高亮、翻转动画。
  * 尺寸通过 px() 基于摄像机宽度等比缩放。
+ * 牌面布局：左上角 rank+suit，中央 suit 大花
  *
- * @param scene  所属 Phaser 场景
- * @param x      初始 x 坐标
- * @param y      初始 y 坐标
- * @param card   牌数据 (id, suit, rank)
- * @param faceUp true=牌面朝上，false=牌背朝上
+ * @param scene   所属 Phaser 场景
+ * @param x       初始 x 坐标
+ * @param y       初始 y 坐标
+ * @param card    牌数据 (id, suit, rank)
+ * @param faceUp  true=牌面朝上，false=牌背朝上
+ * @param isSmall true=使用小牌尺寸(76×112)，false=使用标准尺寸(92×136)
  */
 export class CardSprite extends Phaser.GameObjects.Container {
   public cardData: CardData
@@ -27,44 +37,78 @@ export class CardSprite extends Phaser.GameObjects.Container {
   private cardH: number
   private bg: Phaser.GameObjects.Rectangle
   private label!: Phaser.GameObjects.Text
-  private back: Phaser.GameObjects.Image | null = null
+  private centerSuit!: Phaser.GameObjects.Text | null
+  private backDecoration: Phaser.GameObjects.Rectangle | null = null
 
-  constructor(scene: Phaser.Scene, x: number, y: number, card: CardData, faceUp = true) {
+  constructor(scene: Phaser.Scene, x: number, y: number, card: CardData, faceUp = true, isSmall = false) {
     super(scene, x, y)
     this.cardData = card
-    this.cardW = px(106, scene)
-    this.cardH = px(144, scene)
 
-    // 牌面背景
+    const baseW = isSmall ? CARD_SMALL_WIDTH : CARD_BASE_WIDTH
+    const baseH = isSmall ? CARD_SMALL_HEIGHT : CARD_BASE_HEIGHT
+    this.cardW = px(baseW, scene)
+    this.cardH = px(baseH, scene)
+
+    // 白色圆角牌面背景 + 细边框
     this.bg = scene.add
       .rectangle(0, 0, this.cardW, this.cardH, 0xffffff, 1)
-      .setStrokeStyle(px(2, scene), 0x333333)
+      .setStrokeStyle(px(1.5, scene), 0x999999)
     this.add(this.bg)
 
     if (faceUp && card.suit) {
-      const suitColor = card.suit === "h" || card.suit === "d" ? 0xcc0000 : 0x000000
+      const isRed = card.suit === "h" || card.suit === "d"
+      const suitColor = isRed ? "#cc0000" : "#000000"
       const suitSymbol: Record<string, string> = { h: "♥", d: "♦", c: "♣", s: "♠" }
+      const rankStr = RANK_NAMES[card.rank]
+      const suitStr = suitSymbol[card.suit]
+      const rankFontSize = isSmall ? px(16, scene) : px(22, scene)
+      const centerSuitSize = isSmall ? px(28, scene) : px(36, scene)
+      const margin = isSmall ? px(5, scene) : px(8, scene)
+
+      // 左上角 rank + suit
       this.label = scene.add
-        .text(-this.cardW / 2 + px(9, scene), -this.cardH / 2 + px(6, scene), `${RANK_NAMES[card.rank]}${suitSymbol[card.suit]}`, {
-          fontSize: `${px(24, scene)}px`,
-          color: suitColor === 0xcc0000 ? "#cc0000" : "#000000",
+        .text(-this.cardW / 2 + margin, -this.cardH / 2 + margin, `${rankStr}${suitStr}`, {
+          fontSize: `${rankFontSize}px`,
+          color: suitColor,
+          fontStyle: "bold",
         })
         .setOrigin(0, 0)
       this.add(this.label)
+
+      // 中央大花色
+      this.centerSuit = scene.add
+        .text(0, 0, suitStr, {
+          fontSize: `${centerSuitSize}px`,
+          color: suitColor,
+        })
+        .setOrigin(0.5)
+      this.add(this.centerSuit)
+
     } else if (faceUp && !card.suit) {
       // 王
+      const isRed = card.rank === 17
+      const label = card.rank === 17 ? "大王" : "小王"
+      const fontSize = isSmall ? px(16, scene) : px(20, scene)
       this.label = scene.add
-        .text(0, 0, card.rank === 17 ? "大王" : "小王", {
-          fontSize: `${px(20, scene)}px`,
-          color: card.rank === 17 ? "#cc0000" : "#000000",
+        .text(0, 0, label, {
+          fontSize: `${fontSize}px`,
+          color: isRed ? "#cc0000" : "#000000",
+          fontStyle: "bold",
         })
         .setOrigin(0.5)
       this.add(this.label)
+      this.centerSuit = null
     } else {
-      // 牌背
-      this.back = scene.add.image(0, 0, "card-back")
-      if (this.back) this.back.setDisplaySize(this.cardW - px(6, scene), this.cardH - px(6, scene))
-      this.add(this.back)
+      // 牌背 — 深色底 + 浅色边框
+      this.bg.setFillStyle(0x1a3c6b, 1)
+      this.bg.setStrokeStyle(px(2, scene), 0x2a5c9b)
+      // 牌背花纹：内部浅色矩形
+      const innerMargin = px(4, scene)
+      this.backDecoration = scene.add
+        .rectangle(0, 0, this.cardW - innerMargin * 2, this.cardH - innerMargin * 2, 0x2255aa, 1)
+        .setStrokeStyle(px(1, scene), 0x3a7dcc)
+      this.add(this.backDecoration)
+      this.centerSuit = null
     }
 
     this.setSize(this.cardW, this.cardH)
@@ -74,30 +118,57 @@ export class CardSprite extends Phaser.GameObjects.Container {
 
   /** 翻转为牌面 (用于发牌动画后的底牌翻转) */
   showFace() {
-    if (this.label) return
-    if (!this.back) return
+    if (this.label) return // 已经是牌面了
+    // 清理牌背装饰
+    if (this.backDecoration) {
+      this.backDecoration.destroy()
+      this.backDecoration = null
+    }
+    if (this.bg) {
+      this.bg.setFillStyle(0xffffff, 1)
+      this.bg.setStrokeStyle(px(1.5, this.scene), 0x999999)
+    }
+    this.createFaceContent()
+  }
 
-    this.back.destroy()
-    this.back = null
-
-    if (this.cardData.suit) {
-      const suitColor = this.cardData.suit === "h" || this.cardData.suit === "d" ? 0xcc0000 : 0x000000
+  private createFaceContent() {
+    const card = this.cardData
+    if (card.suit) {
+      const isRed = card.suit === "h" || card.suit === "d"
+      const suitColor = isRed ? "#cc0000" : "#000000"
       const suitSymbol: Record<string, string> = { h: "♥", d: "♦", c: "♣", s: "♠" }
+      const rankStr = RANK_NAMES[card.rank]
+      const suitStr = suitSymbol[card.suit]
+      const margin = px(8, this.scene)
+
       this.label = this.scene.add
-        .text(-this.cardW / 2 + px(9, this.scene), -this.cardH / 2 + px(6, this.scene), `${RANK_NAMES[this.cardData.rank]}${suitSymbol[this.cardData.suit]}`, {
-          fontSize: `${px(24, this.scene)}px`,
-          color: suitColor === 0xcc0000 ? "#cc0000" : "#000000",
+        .text(-this.cardW / 2 + margin, -this.cardH / 2 + margin, `${rankStr}${suitStr}`, {
+          fontSize: `${px(22, this.scene)}px`,
+          color: suitColor,
+          fontStyle: "bold",
         })
         .setOrigin(0, 0)
       this.add(this.label)
+
+      this.centerSuit = this.scene.add
+        .text(0, 0, suitStr, {
+          fontSize: `${px(36, this.scene)}px`,
+          color: suitColor,
+        })
+        .setOrigin(0.5)
+      this.add(this.centerSuit)
     } else {
+      const isRed = card.rank === 17
+      const label = card.rank === 17 ? "大王" : "小王"
       this.label = this.scene.add
-        .text(0, 0, this.cardData.rank === 17 ? "大王" : "小王", {
+        .text(0, 0, label, {
           fontSize: `${px(20, this.scene)}px`,
-          color: this.cardData.rank === 17 ? "#cc0000" : "#000000",
+          color: isRed ? "#cc0000" : "#000000",
+          fontStyle: "bold",
         })
         .setOrigin(0.5)
       this.add(this.label)
+      this.centerSuit = null
     }
   }
 
