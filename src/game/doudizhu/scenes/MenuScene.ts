@@ -1,4 +1,5 @@
 import Phaser from "phaser"
+import { px } from "../utils/scale"
 
 export class MenuScene extends Phaser.Scene {
   constructor() {
@@ -6,6 +7,12 @@ export class MenuScene extends Phaser.Scene {
   }
 
   create() {
+    // 菜单页静态内容，降帧率省 CPU
+    this.game.loop.targetFps = 30
+    this.events.once("shutdown", () => {
+      this.game.loop.targetFps = 60
+    })
+
     const { width, height } = this.cameras.main
 
     // 背景
@@ -18,18 +25,18 @@ export class MenuScene extends Phaser.Scene {
     // 标题
     this.add
       .text(width / 2, height * 0.25, "斗地主", {
-        fontSize: "64px",
+        fontSize: `${px(96, this)}px`,
         color: "#ffffff",
         fontStyle: "bold",
         stroke: "#000000",
-        strokeThickness: 4,
+        strokeThickness: px(4, this),
       })
       .setOrigin(0.5)
 
     // 副标题
     this.add
-      .text(width / 2, height * 0.35, "与 AI 对战 · DeepSeek 驱动", {
-        fontSize: "20px",
+      .text(width / 2, height * 0.35, "与 AI 对战", {
+        fontSize: `${px(20, this)}px`,
         color: "#cccccc",
       })
       .setOrigin(0.5)
@@ -37,10 +44,10 @@ export class MenuScene extends Phaser.Scene {
     // 开始按钮
     const btn = this.add
       .text(width / 2, height * 0.55, "[ 开始游戏 ]", {
-        fontSize: "32px",
+        fontSize: `${px(32, this)}px`,
         color: "#ffffff",
         backgroundColor: "#d4a017",
-        padding: { x: 32, y: 12 },
+        padding: { x: px(32, this), y: px(12, this) },
       })
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true })
@@ -54,7 +61,7 @@ export class MenuScene extends Phaser.Scene {
     // 返回社区按钮
     const backBtn = this.add
       .text(width / 2, height * 0.7, "← 返回社区", {
-        fontSize: "18px",
+        fontSize: `${px(48, this)}px`,
         color: "#aaaaaa",
       })
       .setOrigin(0.5)

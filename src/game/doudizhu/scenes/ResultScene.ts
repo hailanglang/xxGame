@@ -1,5 +1,6 @@
 import Phaser from "phaser"
 import { GameState, RANK_NAMES } from "../logic/types"
+import { px } from "../utils/scale"
 
 export class ResultScene extends Phaser.Scene {
   constructor() {
@@ -17,10 +18,10 @@ export class ResultScene extends Phaser.Scene {
     const resultText = isHumanWin ? "🎉 你赢了！" : "😞 你输了"
     this.add
       .text(width / 2, height * 0.3, resultText, {
-        fontSize: "48px",
+        fontSize: `${px(48, this)}px`,
         color: isHumanWin ? "#ffd700" : "#ff4444",
         stroke: "#000000",
-        strokeThickness: 4,
+        strokeThickness: px(4, this),
       })
       .setOrigin(0.5)
 
@@ -31,7 +32,7 @@ export class ResultScene extends Phaser.Scene {
       .join("  |  ")
     this.add
       .text(width / 2, height * 0.45, info, {
-        fontSize: "18px",
+        fontSize: `${px(18, this)}px`,
         color: "#cccccc",
       })
       .setOrigin(0.5)
@@ -39,7 +40,7 @@ export class ResultScene extends Phaser.Scene {
     // Token 用量提示
     this.add
       .text(width / 2, height * 0.52, "Token 用量详情请查看游戏外设置面板", {
-        fontSize: "14px",
+        fontSize: `${px(14, this)}px`,
         color: "#888888",
       })
       .setOrigin(0.5)
@@ -47,10 +48,10 @@ export class ResultScene extends Phaser.Scene {
     // 再来一局
     const replayBtn = this.add
       .text(width / 2, height * 0.65, "[ 再来一局 ]", {
-        fontSize: "28px",
+        fontSize: `${px(28, this)}px`,
         color: "#ffffff",
         backgroundColor: "#d4a017",
-        padding: { x: 24, y: 10 },
+        padding: { x: px(24, this), y: px(10, this) },
       })
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true })
@@ -59,7 +60,7 @@ export class ResultScene extends Phaser.Scene {
     // 返回菜单
     this.add
       .text(width / 2, height * 0.78, "返回主菜单", {
-        fontSize: "18px",
+        fontSize: `${px(18, this)}px`,
         color: "#aaaaaa",
       })
       .setOrigin(0.5)

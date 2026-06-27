@@ -3,6 +3,7 @@ import Phaser from "phaser"
 import { GameState, PlayerPosition } from "../logic/types"
 import { initGame, assignLandlord } from "../logic/deck"
 import { CardSprite } from "../ui/Card"
+import { px } from "../utils/scale"
 
 export class DealingScene extends Phaser.Scene {
   private gameState!: GameState
@@ -22,9 +23,9 @@ export class DealingScene extends Phaser.Scene {
 
     // 三家手牌目标位置 (发牌动画终点)
     const targets: Array<{ x: number; y: number }> = [
-      { x: centerX, y: height - 80 },         // 玩家 (底部)
-      { x: width / 2 + 280, y: height / 2 },  // 下家 (右侧)
-      { x: width / 2 - 280, y: height / 2 },  // 上家 (左侧)
+      { x: centerX, y: height - px(80, this) },         // 玩家 (底部)
+      { x: width / 2 + px(280, this), y: height / 2 },  // 下家 (右侧)
+      { x: width / 2 - px(280, this), y: height / 2 },  // 上家 (左侧)
     ]
 
     // 创建 54 张牌背面，全部从桌面中央开始
@@ -38,7 +39,7 @@ export class DealingScene extends Phaser.Scene {
     deck.forEach((_card, i) => {
       if (i >= 51) {
         // 3 张底牌：留在中央区域横向散开
-        const bottomOffsetX = (i - 51 - 1) * 30
+        const bottomOffsetX = (i - 51 - 1) * px(30, this)
         this.tweens.add({
           targets: this.cards[i],
           x: centerX + bottomOffsetX,
@@ -53,7 +54,7 @@ export class DealingScene extends Phaser.Scene {
       const t = targets[targetIdx]
       // 同一位置的手牌略微错开，形成扇形效果
       const cardInHand = Math.floor(i / 3)
-      const offsetX = (cardInHand - 8) * 20
+      const offsetX = (cardInHand - 8) * px(20, this)
 
       this.tweens.add({
         targets: this.cards[i],

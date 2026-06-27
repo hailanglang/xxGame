@@ -1,6 +1,7 @@
 // src/game/doudizhu/scenes/PlayScene.ts
 import Phaser from "phaser"
 import type { GameState, Card, Combo, PlayerPosition } from "../logic/types"
+import { px } from "../utils/scale"
 import { RANK_NAMES, ComboType } from "../logic/types"
 import { recognizeCombo } from "../logic/rules"
 import { canBeat } from "../logic/compare"
@@ -49,40 +50,40 @@ export class PlayScene extends Phaser.Scene {
     // ---- 玩家信息 ----
     const names = ["我", "下家", "上家"]
     this.avatars = [
-      new PlayerAvatar(this, 40, height - 60, names[0], this.gameState.landlord === 0),
-      new PlayerAvatar(this, width - 180, height / 2 - 40, names[1], this.gameState.landlord === 1),
-      new PlayerAvatar(this, 40, height / 2 - 40, names[2], this.gameState.landlord === 2),
+      new PlayerAvatar(this, px(40, this), height - px(60, this), names[0], this.gameState.landlord === 0),
+      new PlayerAvatar(this, width - px(180, this), height / 2 - px(40, this), names[1], this.gameState.landlord === 1),
+      new PlayerAvatar(this, px(40, this), height / 2 - px(40, this), names[2], this.gameState.landlord === 2),
     ]
 
     // ---- 我的手牌（底部扇形） ----
-    this.myHand = new HandFan(this, width / 2, height - 50)
+    this.myHand = new HandFan(this, width / 2, height - px(50, this))
     this.myHand.setHand(this.gameState.hands[0], true)
 
     // ---- 出牌按钮 ----
     this.add
-      .text(width / 2 - 60, height - 130, "出牌", {
-        fontSize: "20px",
+      .text(width / 2 - px(60, this), height - px(130, this), "出牌", {
+        fontSize: `${px(20, this)}px`,
         color: "#ffffff",
         backgroundColor: "#d4a017",
-        padding: { x: 16, y: 6 },
+        padding: { x: px(16, this), y: px(6, this) },
       })
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true })
       .on("pointerdown", () => this.onHumanPlay())
 
     this.add
-      .text(width / 2 + 60, height - 130, "不出", {
-        fontSize: "20px",
+      .text(width / 2 + px(60, this), height - px(130, this), "不出", {
+        fontSize: `${px(20, this)}px`,
         color: "#ffffff",
         backgroundColor: "#666666",
-        padding: { x: 16, y: 6 },
+        padding: { x: px(16, this), y: px(6, this) },
       })
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true })
       .on("pointerdown", () => this.onHumanPass())
 
     // ---- 倒计时 ----
-    this.countdown = new Countdown(this, width / 2 - 100, height - 170, 200, () => {
+    this.countdown = new Countdown(this, width / 2 - px(100, this), height - px(170, this), px(200, this), () => {
       this.onHumanTimeout()
     })
 
@@ -338,9 +339,9 @@ export class PlayScene extends Phaser.Scene {
   private showLastPlay(player: PlayerPosition, combo: Combo | null) {
     const { width, height } = this.cameras.main
     const positions = [
-      { x: width / 2, y: height - 200 },
-      { x: width / 2 + 150, y: height / 2 },
-      { x: width / 2 - 150, y: height / 2 },
+      { x: width / 2, y: height - px(200, this) },
+      { x: width / 2 + px(150, this), y: height / 2 },
+      { x: width / 2 - px(150, this), y: height / 2 },
     ]
 
     // 清除旧文本
@@ -352,7 +353,7 @@ export class PlayScene extends Phaser.Scene {
       // 显示"不出"
       this.lastPlayTexts[player] = this.add
         .text(positions[player].x, positions[player].y, "不出", {
-          fontSize: "18px",
+          fontSize: `${px(18, this)}px`,
           color: "#aaaaaa",
         })
         .setOrigin(0.5)
@@ -369,10 +370,10 @@ export class PlayScene extends Phaser.Scene {
 
     this.lastPlayTexts[player] = this.add
       .text(positions[player].x, positions[player].y, cardStr, {
-        fontSize: "22px",
+        fontSize: `${px(22, this)}px`,
         color: "#ffffff",
         stroke: "#000000",
-        strokeThickness: 3,
+        strokeThickness: px(3, this),
       })
       .setOrigin(0.5)
   }
@@ -381,10 +382,10 @@ export class PlayScene extends Phaser.Scene {
     const { width, height } = this.cameras.main
     const t = this.add
       .text(width / 2, height / 2, msg, {
-        fontSize: "24px",
+        fontSize: `${px(24, this)}px`,
         color: "#ffffff",
         backgroundColor: "#ff444488",
-        padding: { x: 16, y: 8 },
+        padding: { x: px(16, this), y: px(8, this) },
       })
       .setOrigin(0.5)
     this.tweens.add({
