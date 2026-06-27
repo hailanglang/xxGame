@@ -7,8 +7,6 @@ import { ResultScene } from "./scenes/ResultScene"
 
 export const doudizhuConfig: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
-  width: 1280,
-  height: 720,
   backgroundColor: "#1a6b3c",
   parent: undefined, // 由 GameCanvas 在运行时设置
   scene: [BootScene, MenuScene, DealingScene, PlayScene, ResultScene],

@@ -26,16 +26,18 @@ interface GameCard {
 
 const games: GameCard[] = [
   {
+    title: "斗地主",
+    desc: "和两个AI演一出牌局大戏",
+    iconText: "斗地主",
+    playable: true,
+    href: "/game/doudizhu",
+  },
+  {
     title: "2048",
     desc: "合并数字方块，挑战最高分！",
     iconText: "2048",
     playable: true,
     href: "/game/2048",
-  },
-  {
-    title: "斗地主",
-    desc: "和两个AI演一出牌局大戏",
-    gradient: "from-[#FF6467] to-[#E7000B]",
   },
   {
     title: "飞行棋",
