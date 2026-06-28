@@ -2,16 +2,21 @@
 import Phaser from "phaser"
 import { px } from "../utils/scale"
 
+/** Countdown 构造参数 */
+export interface CountdownOptions {
+  scene: Phaser.Scene
+  x: number
+  y: number
+  /** 条宽度 (像素) */
+  width: number
+  /** 超时回调函数 */
+  onTimeout: () => void
+}
+
 /**
  * 倒计时条
  *
  * 横向进度条，计时归零时触发回调。颜色在剩余 >30% 时为金色，≤30% 时为红色。
- *
- * @param scene     所属 Phaser 场景
- * @param x         条左上角 x 坐标
- * @param y         条左上角 y 坐标
- * @param width     条宽度 (像素)
- * @param onTimeout 超时回调函数
  */
 export class Countdown extends Phaser.GameObjects.Container {
   private bar: Phaser.GameObjects.Graphics
@@ -21,7 +26,7 @@ export class Countdown extends Phaser.GameObjects.Container {
   private onTimeout: () => void
   private barWidth: number
 
-  constructor(scene: Phaser.Scene, x: number, y: number, width: number, onTimeout: () => void) {
+  constructor({ scene, x, y, width, onTimeout }: CountdownOptions) {
     super(scene, x, y)
     this.barWidth = width
     this.totalTime = 15

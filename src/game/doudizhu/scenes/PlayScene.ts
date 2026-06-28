@@ -61,13 +61,13 @@ export class PlayScene extends Phaser.Scene {
 
     // ---- 玩家信息 (底部) ----
     this.avatars = [
-      new PlayerAvatar(this, px(24, this), height - px(250, this), "我", "你（农民）", this.gameState.hands[0].length, this.gameState.landlord === 0, "left"),
-      new PlayerAvatar(this, width - px(24, this), px(24, this), "李", "AI 李四", this.gameState.hands[1].length, this.gameState.landlord === 1, "right"),
-      new PlayerAvatar(this, px(24, this), px(24, this), "张", "AI 张三", this.gameState.hands[2].length, this.gameState.landlord === 2, "left"),
+      new PlayerAvatar({ scene: this, x: px(24, this), y: height - px(250, this), avatarChar: "我", displayName: "你（农民）", cardCount: this.gameState.hands[0].length, isLandlord: this.gameState.landlord === 0, layout: "left" }),
+      new PlayerAvatar({ scene: this, x: width - px(24, this), y: px(24, this), avatarChar: "李", displayName: "AI 李四", cardCount: this.gameState.hands[1].length, isLandlord: this.gameState.landlord === 1, layout: "right" }),
+      new PlayerAvatar({ scene: this, x: px(24, this), y: px(24, this), avatarChar: "张", displayName: "AI 张三", cardCount: this.gameState.hands[2].length, isLandlord: this.gameState.landlord === 2, layout: "left" }),
     ]
 
     // ---- 我的手牌 ----
-    this.myHand = new HandFan(this, width / 2, height - px(70, this))
+    this.myHand = new HandFan({ scene: this, x: width / 2, y: height - px(70, this) })
     this.myHand.setHand(this.gameState.hands[0], true)
 
     // ---- 操作按钮 (底部居中) ----
@@ -82,12 +82,12 @@ export class PlayScene extends Phaser.Scene {
     this.createButton(width / 2 + btnGap, btnY, "提示", 0x666666, () => this.onHumanHint())
 
     // ---- 倒计时 ----
-    this.countdown = new Countdown(this, width / 2 - px(80, this), height - px(170, this), px(160, this), () => {
+    this.countdown = new Countdown({ scene: this, x: width / 2 - px(80, this), y: height - px(170, this), width: px(160, this), onTimeout: () => {
       this.onHumanTimeout()
-    })
+    } })
 
     // ---- 特效 ----
-    this.particles = new ParticleEffects(this)
+    this.particles = new ParticleEffects({ scene: this })
 
     // ---- 开始游戏 ----
     this.startTurn()
@@ -155,7 +155,7 @@ export class PlayScene extends Phaser.Scene {
     const gap = px(60, this)
     const totalW = (bottomCards.length - 1) * gap
     bottomCards.forEach((card, i) => {
-      const cs = new CardSprite(this, i * gap - totalW / 2, 0, card, true, true)
+      const cs = new CardSprite({ scene: this, x: i * gap - totalW / 2, y: 0, card, faceUp: true, isSmall: false })
       this.bottomCardsContainer.add(cs)
     })
   }
@@ -464,7 +464,7 @@ export class PlayScene extends Phaser.Scene {
     const gap = isSidePlayer ? px(18, this) : px(28, this)
     const totalW = (combo.cards.length - 1) * gap
     combo.cards.forEach((card, i) => {
-      const cs = new CardSprite(this, i * gap - totalW / 2, 0, card, true, true)
+      const cs = new CardSprite({ scene: this, x: i * gap - totalW / 2, y: 0, card, faceUp: true, isSmall: false })
       container.add(cs)
     })
     this.lastPlayCards[player] = container

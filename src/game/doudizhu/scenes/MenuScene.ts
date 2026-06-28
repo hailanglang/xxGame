@@ -1,5 +1,7 @@
 import Phaser from "phaser"
 import { px } from "../utils/scale"
+import { CardSprite } from "../ui/Card"
+import { Suit } from "../logic/types"
 
 export class MenuScene extends Phaser.Scene {
   constructor() {
@@ -32,6 +34,24 @@ export class MenuScene extends Phaser.Scene {
         strokeThickness: px(4, this),
       })
       .setOrigin(0.5)
+
+    // 装饰卡片（大王）
+    new CardSprite({
+      scene: this,
+      x: px(100,this),
+      y: px(100,this),
+      card: { id: 53, suit: null, rank: 17 },
+      faceUp: true
+    })
+    
+    // 装饰卡片（大王）
+    new CardSprite({
+      scene: this,
+      x: width / 2 + px(120, this),
+      y: height * 0.25,
+      card: { id: 1, suit: Suit.Hearts, rank: 3 },
+      faceUp: true
+    })
 
     // 副标题
     this.add

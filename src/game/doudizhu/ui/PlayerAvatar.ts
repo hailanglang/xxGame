@@ -2,6 +2,23 @@
 import Phaser from "phaser"
 import { px } from "../utils/scale"
 
+/** PlayerAvatar 构造参数 */
+export interface PlayerAvatarOptions {
+  scene: Phaser.Scene
+  x: number
+  y: number
+  /** 头像中显示的单字符 (我 / 张 / 李) */
+  avatarChar: string
+  /** 显示名称 (你（农民）/ AI 张三 / AI 李四) */
+  displayName: string
+  /** 剩余牌数 */
+  cardCount: number
+  /** 是否为地主 */
+  isLandlord: boolean
+  /** 布局方向 */
+  layout?: "left" | "right"
+}
+
 /**
  * 玩家信息组件
  *
@@ -9,15 +26,6 @@ import { px } from "../utils/scale"
  * 支持两种布局方向：
  *   - "left" (默认)：头像在左，名称+牌数在右
  *   - "right"：头像在右，名称+牌数在左
- *
- * @param scene       所属 Phaser 场景
- * @param x           x 坐标
- * @param y           y 坐标
- * @param avatarChar  头像中显示的单字符 (我 / 张 / 李)
- * @param displayName 显示名称 (你（农民）/ AI 张三 / AI 李四)
- * @param cardCount   剩余牌数
- * @param isLandlord  是否为地主
- * @param layout      "left" | "right"
  */
 export class PlayerAvatar extends Phaser.GameObjects.Container {
   private cardCountText: Phaser.GameObjects.Text
@@ -26,22 +34,12 @@ export class PlayerAvatar extends Phaser.GameObjects.Container {
   private landlordBadge: Phaser.GameObjects.Text | null = null
   private layout: "left" | "right"
 
-  constructor(
-    scene: Phaser.Scene,
-    x: number,
-    y: number,
-    avatarChar: string,
-    displayName: string,
-    cardCount: number,
-    isLandlord: boolean,
-    layout: "left" | "right" = "left",
-  ) {
+  constructor({ scene, x, y, avatarChar, displayName, cardCount, isLandlord, layout = "left" }: PlayerAvatarOptions) {
     super(scene, x, y)
 
     this.layout = layout
 
     const avatarR = px(20, scene)         // 头像半径
-    const avatarSize = avatarR * 2         // 头像直径
     const gap = px(8, scene)               // 头像与文字的间距
 
     // 头像圆形背景

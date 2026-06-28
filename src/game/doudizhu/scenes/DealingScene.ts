@@ -26,9 +26,9 @@ export class DealingScene extends Phaser.Scene {
     // 玩家信息 — 匹配 PlayScene 布局
     const handSizes = this.gameState.hands.map((h) => h.length)
     this.avatars = [
-      new PlayerAvatar(this, px(24, this), height - px(250, this), "我", "你（农民）", handSizes[0], false, "left"),
-      new PlayerAvatar(this, width - px(24, this), px(24, this), "李", "AI 李四", handSizes[1], false, "right"),
-      new PlayerAvatar(this, px(24, this), px(24, this), "张", "AI 张三", handSizes[2], false, "left"),
+      new PlayerAvatar({ scene: this, x: px(24, this), y: height - px(250, this), avatarChar: "我", displayName: "你（农民）", cardCount: handSizes[0], isLandlord: false, layout: "left" }),
+      new PlayerAvatar({ scene: this, x: width - px(24, this), y: px(24, this), avatarChar: "李", displayName: "AI 李四", cardCount: handSizes[1], isLandlord: false, layout: "right" }),
+      new PlayerAvatar({ scene: this, x: px(24, this), y: px(24, this), avatarChar: "张", displayName: "AI 张三", cardCount: handSizes[2], isLandlord: false, layout: "left" }),
     ]
 
     // 三家手牌目标位置
@@ -41,7 +41,7 @@ export class DealingScene extends Phaser.Scene {
     // 创建 54 张牌背面，全部从桌面中央开始
     const deck = this.gameState.deck
     deck.forEach((card) => {
-      const cs = new CardSprite(this, centerX, centerY, card, false)
+      const cs = new CardSprite({ scene: this, x: centerX, y: centerY, card, faceUp: false })
       this.cards.push(cs)
     })
 

@@ -15,19 +15,22 @@ export const CARD_SMALL_HEIGHT = 112
 export const CARD_BACK_WIDTH = 72
 export const CARD_BACK_HEIGHT = 108
 
+/** CardSprite 构造参数 */
+export interface CardSpriteOptions {
+  scene: Phaser.Scene
+  x: number
+  y: number
+  card: CardData
+  faceUp?: boolean
+  isSmall?: boolean
+}
+
 /**
  * 扑克牌精灵
  *
  * 一张可交互的牌，支持牌面/牌背两种状态、选中高亮、翻转动画。
  * 尺寸通过 px() 基于摄像机宽度等比缩放。
  * 牌面布局：左上角 rank+suit，中央 suit 大花
- *
- * @param scene   所属 Phaser 场景
- * @param x       初始 x 坐标
- * @param y       初始 y 坐标
- * @param card    牌数据 (id, suit, rank)
- * @param faceUp  true=牌面朝上，false=牌背朝上
- * @param isSmall true=使用小牌尺寸(76×112)，false=使用标准尺寸(92×136)
  */
 export class CardSprite extends Phaser.GameObjects.Container {
   public cardData: CardData
@@ -40,7 +43,7 @@ export class CardSprite extends Phaser.GameObjects.Container {
   private centerSuit!: Phaser.GameObjects.Text | null
   private backDecoration: Phaser.GameObjects.Rectangle | null = null
 
-  constructor(scene: Phaser.Scene, x: number, y: number, card: CardData, faceUp = true, isSmall = false) {
+  constructor({ scene, x, y, card, faceUp = true, isSmall = false }: CardSpriteOptions) {
     super(scene, x, y)
     this.cardData = card
 

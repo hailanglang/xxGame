@@ -38,8 +38,8 @@ export default function GameCanvas() {
   }, [])
 
   return (
-    <div className="flex justify-center p-5 h-[calc(100vh-64px)]">
-      <div ref={containerRef} className="w-full h-full max-w-[960px] max-h-[540px]" />
+    <div className="flex justify-center h-[calc(100vh-64px)]">
+      <div ref={containerRef} className="w-full h-full " />
     </div>
   )
 }
