@@ -6,6 +6,12 @@ import { CardSprite } from "../ui/Card"
 import { PlayerAvatar } from "../ui/PlayerAvatar"
 import { px } from "../utils/scale"
 
+/**
+ * 发牌场景
+ *
+ * 54 张牌背面从桌面中央飞向三家玩家位置的动画。发牌完成后，3 张底牌在原地翻转
+ * 并显示"底牌"标签。短暂停留后自动进入 PlayScene 开始叫地主阶段。
+ */
 export class DealingScene extends Phaser.Scene {
   private gameState!: GameState
   private cards: CardSprite[] = []

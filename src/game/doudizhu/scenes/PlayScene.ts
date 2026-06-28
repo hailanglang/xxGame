@@ -20,6 +20,13 @@ import {
 import { dsApi } from "@/lib/api-client"
 import { useGameStore } from "@/stores/game-store"
 
+/**
+ * 主游戏场景
+ *
+ * 斗地主核心对局。三栏布局：左侧上家 / 中央底牌区 / 右侧下家，底部为玩家手牌
+ * 和操作区域。处理玩家出牌、不出、提示以及 AI 回合的完整游戏流程。
+ * 支持炸弹特效、倒计时、AI API 调用及 fallback 逻辑。
+ */
 export class PlayScene extends Phaser.Scene {
   private gameState!: GameState
   private myHand!: HandFan

@@ -1,5 +1,11 @@
 import Phaser from "phaser"
 
+/**
+ * 启动场景
+ *
+ * 游戏初始化入口。负责加载外部资源（图片、音效），并在资源缺失时自动生成
+ * 占位纹理（card-back / bg-table），确保后续场景正常运行。
+ */
 export class BootScene extends Phaser.Scene {
   constructor() {
     super({ key: "BootScene" })

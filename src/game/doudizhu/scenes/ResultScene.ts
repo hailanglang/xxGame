@@ -2,6 +2,12 @@ import Phaser from "phaser"
 import { GameState, RANK_NAMES } from "../logic/types"
 import { px } from "../utils/scale"
 
+/**
+ * 结算场景
+ *
+ * 展示游戏结果（胜利/失败）、各家剩余手牌统计以及 Token 用量提示。
+ * 提供"再来一局"和"返回主菜单"按钮，方便快速重开。
+ */
 export class ResultScene extends Phaser.Scene {
   constructor() {
     super({ key: "ResultScene" })

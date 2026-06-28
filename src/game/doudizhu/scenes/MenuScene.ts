@@ -1,8 +1,14 @@
 import Phaser from "phaser"
 import { px } from "../utils/scale"
-import { CardSprite } from "../ui/Card"
-import { Suit } from "../logic/types"
+import { CARD_BASE_HEIGHT, CARD_BASE_WIDTH, CardSprite } from "../ui/Card"
+import { Rank, Suit } from "../logic/types"
 
+/**
+ * 主菜单场景
+ *
+ * 游戏首页，展示"斗地主"标题和装饰性卡牌。提供"开始游戏"按钮进入发牌场景，
+ * 以及"返回社区"链接跳回 XXGame 首页。进入时降帧至 30fps 以节省 CPU。
+ */
 export class MenuScene extends Phaser.Scene {
   constructor() {
     super({ key: "MenuScene" })
@@ -35,23 +41,22 @@ export class MenuScene extends Phaser.Scene {
       })
       .setOrigin(0.5)
 
-    // 装饰卡片（大王）
-    new CardSprite({
-      scene: this,
-      x: px(100,this),
-      y: px(100,this),
-      card: { id: 53, suit: null, rank: 17 },
-      faceUp: true
+    new Array(15).fill(null).forEach((item,ind) =>{
+      const suits = [Suit.Spades, Suit.Hearts, Suit.Clubs, Suit.Diamonds]
+
+      // 装饰卡片（大王）
+      const limitInd = ind % 8
+      const card = {
+        scene: this,
+        x: px(100 + limitInd * (CARD_BASE_WIDTH + 10),this),
+        y: px(100 + (ind > 7 ? CARD_BASE_HEIGHT + 10 : 0),this),
+        card: { id: ind, suit: ind <= 12 ? suits[ind % 4] : null, rank: ind + 3 as Rank },
+        faceUp: true
+      }
+      console.log('card.card', card.card)
+      new CardSprite(card)
     })
-    
-    // 装饰卡片（大王）
-    new CardSprite({
-      scene: this,
-      x: width / 2 + px(120, this),
-      y: height * 0.25,
-      card: { id: 1, suit: Suit.Hearts, rank: 3 },
-      faceUp: true
-    })
+
 
     // 副标题
     this.add
